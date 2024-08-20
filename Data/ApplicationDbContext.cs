@@ -3,28 +3,35 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
 
-namespace MyIdentityApp.Data;
+namespace MyIdentityApp.Data {
 
-
-public class ApplicationUser : IdentityUser
-{
-    public string? FullName { get; set; }
-}
-public class AccountController : Controller
-{
-    private readonly UserManager<ApplicationUser> _userManager;
-
-    public AccountController(UserManager<ApplicationUser> userManager)
+    public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     {
-        _userManager = userManager;
-    }
-}
+        public DbSet<ApplicationUser> ApplicationUsers { get; set; }
 
-public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
-{
-    
-    public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
-        : base(options)
-    {
+        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
+            : base(options)
+        {
+        }
     }
+
+
+    public class ApplicationUser : IdentityUser
+    {
+        public string? FullName { get; set; }
+    }
+
+
+
+    public class AccountController : Controller
+    {
+        private readonly UserManager<ApplicationUser> _userManager;
+
+        public AccountController(UserManager<ApplicationUser> userManager)
+        {
+            _userManager = userManager;
+        }
+    }
+
+
 }

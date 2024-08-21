@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>List Personel</title>
+</head>
+<body>
+    <h1>List Personel</h1>
+    <table id="personelTable" border="1">
+        <thead>
+            <tr>
+                <th>Username</th>
+                <th>Email</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Personel listesi buraya gelecek -->
+        </tbody>
+    </table>
+
+    <script>
+        // Sayfa yüklendiğinde personel listesini alalım
+        document.addEventListener('DOMContentLoaded', function() {
+            fetch('http://localhost:5057/api/personal/listpersonel', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => { throw new Error(err.message || "Bilinmeyen hata oluştu."); });
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Success:', data);
+                const tableBody = document.querySelector('#personelTable tbody');
+                tableBody.innerHTML = ''; // Önceki içerikleri temizleyelim
+                data.forEach(personel => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `<td>${personel.userName}</td><td>${personel.email}</td>`;
+                    tableBody.appendChild(row);
+                });
+            })
+            .catch((error) => {
+                console.error('Error:', error.message);
+                alert('Hata: ' + error.message);
+            });
+        });
+    </script>
+</body>
+</html>

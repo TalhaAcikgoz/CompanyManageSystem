@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 using MyIdentityApp.Data;
+using Microsoft.EntityFrameworkCore;
+
 
 namespace MyIdentityApp.Controllers;
 
@@ -58,7 +60,7 @@ public class AccountController : Controller
         return BadRequest("Kullanici oluşturulurken hata oluştu. "+ result.ToString()+ " delete error: "+ resultErrors.ToString());
     }
 
-    [HttpGet("getuser")]
+/*     [HttpGet("getuser")]
     public async Task<IActionResult> GetUser(string username)
     {
         var user = await _userManager.FindByNameAsync(username);
@@ -72,7 +74,38 @@ public class AccountController : Controller
             return BadRequest("Kullaniciya ait rol bulunamadi.");
         }
         return Ok(user.UserName +'\n'+ user.Email+'\n'+ userRole[0]);
+    } */
+
+    [HttpGet("getuser")]
+    public async Task<IActionResult> GetUser()
+    {
+        var username = User.Identity.Name;
+        //Console.WriteLine(username);
+        if (username == null)
+        {
+            return Unauthorized("Kullanıcı oturum açmamış.");
+        }
+
+        var user = await _userManager.FindByNameAsync(username);
+        if (user == null)
+        {
+            return BadRequest("Kullanıcı bulunamadı.");
+        }
+
+        var userRole = await _userManager.GetRolesAsync(user);
+        if (userRole == null)
+        {
+            return BadRequest("Kullanıcıya ait rol bulunamadı.");
+        }
+
+        return Ok(new {
+            Username = user.UserName,
+            Email = user.Email,
+            Role = userRole[0],
+            CompanyName = user.CompanyName
+        });
     }
+
 
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginModel model)
@@ -96,5 +129,41 @@ public class AccountController : Controller
         await _signInManager.SignOutAsync();
         return Ok(new { Message = "Çıkış başarılı." });
     }
+
+
+    [HttpGet("listpersonel")]
+    public async Task<IActionResult> ListPersonel()
+    {
+        // Giriş yapmış olan şirket yöneticisini alalım
+        var manager = await _userManager.FindByNameAsync(User.Identity.Name);
+        if (manager == null)
+        {
+            return Unauthorized(new { message = "Oturum açmamış." });
+        }
+
+        // İlk olarak şirket adına göre filtreleme yapalım
+        var usersInCompany = await _userManager.Users
+            .Where(u => u.CompanyName == manager.CompanyName)
+            .ToListAsync();
+
+        // Şirket personelini listelemek için bir liste oluşturalım
+        var personelList = new List<object>();
+
+        // Filtrelenmiş kullanıcıları döngüyle kontrol edelim
+        foreach (var user in usersInCompany)
+        {
+            if (await _userManager.IsInRoleAsync(user, "Personel"))
+            {
+                personelList.Add(new
+                {
+                    user.UserName,
+                    user.Email
+                });
+            }
+        }
+
+        return Ok(personelList);
+    }
+
 
 }

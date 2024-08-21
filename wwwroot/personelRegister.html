@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Personel</title>
+</head>
+<body>
+    <h1>Add Personel</h1>
+    <form id="addPersonelForm">
+        <input type="text" id="username" placeholder="Username" required><br>
+        <input type="email" id="email" placeholder="Email" required><br>
+        <input type="password" id="password" placeholder="Password" required><br>
+        <input type="text" id="companyName" placeholder="Company Name" required><br>
+        <button type="submit">Add Personel</button>
+    </form>
+
+    <script>
+        document.getElementById('addPersonelForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            const data = {
+                Username: document.getElementById('username').value,
+                Email: document.getElementById('email').value,
+                Password: document.getElementById('password').value,
+                CompanyName: document.getElementById('companyName').value,
+                Role: 'Personal',
+            };
+
+            fetch('http://localhost:5057/api/personal/addpersonel', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Success:', data);
+                alert('Personel added successfully!');
+                window.location.href = 'homepage.html';
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+            });
+        });
+    </script>
+</body>
+</html>

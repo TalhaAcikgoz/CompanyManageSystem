@@ -35,17 +35,33 @@
             font-size: 24px;
             margin-bottom: 20px;
         }
+        .role-specific {
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
     <h1>Homepage</h1>
     
-    <div class="welcome-message">
-        Welcome, [User]!
+    <div class="welcome-message" id="welcomeMessage">
+        Welcome, [User]! [Role]! [Company Name]!
     </div>
+
+    <div id="adminSection" class="role-specific" style="display: none;">
+        <button class="button" onclick="listCompanies()">List Companies</button>
+    </div>
+
+    <div id="managerSection" class="role-specific" style="display: none;">
+        <button class="button" onclick="location.href='personelRegister.html'">Add Personel</button>
+        <button class="button" onclick="location.href='personelList.html'">List Personel</button>
+    </div>
+
+    <div id="personelSection" class="role-specific" style="display: none;">
+        <p>Your Company: <span id="companyName">[Company Name]</span></p>
+    </div>
+
+    <button class="button" id="logoutButton" onclick="logout()">Logout</button>
     
-    <button class="button" onclick="location.href='profile.html'">View Profile</button>
-    <button class="button" id="logoutButton">Logout</button>
-    <script src="./js/logout.js"></script>
+    <script src="./js/homepage.js"></script>
 </body>
 </html>

@@ -57,7 +57,8 @@ public class AccountController : Controller
 
         return BadRequest("Kullanici oluşturulurken hata oluştu. "+ result.ToString()+ " delete error: "+ resultErrors.ToString());
     }
-   [HttpGet("getuser")]
+
+    [HttpGet("getuser")]
     public async Task<IActionResult> GetUser(string username)
     {
         var user = await _userManager.FindByNameAsync(username);

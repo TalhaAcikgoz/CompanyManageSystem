@@ -26,6 +26,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         } else if (role === 'Personal') {
             document.getElementById('personelSection').style.display = 'block';
             document.getElementById('companyName').textContent = companyName;
+            document.getElementById('profileButton').onclick = function() {
+                location.href = `personelProfile.html?username=${username}`;
+            };
         }
     } catch (error) {
         console.error(error);

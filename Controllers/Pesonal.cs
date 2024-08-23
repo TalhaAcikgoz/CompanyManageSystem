@@ -49,7 +49,7 @@ namespace MyIdentityApp.Controllers{
             _roleManager = roleManager;
         }
 
-    [HttpPost("addpersonel")] // TODO burda kalmistin
+    [HttpPost("addpersonel")]
     public async Task<IActionResult> CreatePersonal([FromBody] CreateUserModel model)
     {
         if (string.IsNullOrEmpty(User.Identity.Name))
@@ -96,7 +96,7 @@ namespace MyIdentityApp.Controllers{
     }
 
         [HttpGet("listpersonel")]
-    public async Task<IActionResult> ListPersonel()
+        public async Task<IActionResult> ListPersonel()
     {
         // Giriş yapmış olan şirket yöneticisini alalım
         var manager = await _userManager.FindByNameAsync(User.Identity.Name);
@@ -178,8 +178,12 @@ namespace MyIdentityApp.Controllers{
                     return Unauthorized(new {message = "Kullanıcı bulunamadı."});
                 }
                 // 'Manager' rolündeki kullanıcılar için ek yetki kontrolleri
-                if (User.IsInRole("Manager"))
+                if (User.IsInRole("Manager") || User.IsInRole("Personal"))
                 {
+                    if(User.IsInRole("Personal") && model.username != User.Identity.Name)
+                    {
+                        return Forbid("Bu profil güncelleme işlemi için yetkiniz yok.");
+                    }
                     if (string.IsNullOrEmpty(model.username))
                     {
                         Console.WriteLine("Username is null or empty");
@@ -237,8 +241,8 @@ namespace MyIdentityApp.Controllers{
             }
         }
 
-[HttpPut("updatecv")]
-public async Task<IActionResult> UpdateCV([FromBody] Dictionary<string, string> cvData)
+        [HttpPut("updatecv")]
+        public async Task<IActionResult> UpdateCV([FromBody] Dictionary<string, string> cvData)
 {
     try
     {
@@ -254,8 +258,12 @@ public async Task<IActionResult> UpdateCV([FromBody] Dictionary<string, string> 
             return Unauthorized(new { message = "Kullanıcı bulunamadı." });
         }
 
-        if (User.IsInRole("Manager"))
+        if (User.IsInRole("Manager") || User.IsInRole("Personal"))
         {
+            if (User.IsInRole("Personal") && (!cvData.ContainsKey("username") || cvData["username"] != User.Identity.Name))
+            {
+                return Forbid("Bu profil güncelleme işlemi için yetkiniz yok.");
+            }
             if (!cvData.ContainsKey("username") || string.IsNullOrEmpty(cvData["username"]))
             {
                 Console.WriteLine("Username is null or empty");

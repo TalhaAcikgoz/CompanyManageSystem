@@ -97,6 +97,11 @@ public class AccountController : Controller
     [HttpGet("getuser")]
     public async Task<IActionResult> GetUser()
     {
+        
+        if (string.IsNullOrEmpty(User.Identity.Name))
+        {
+            return Unauthorized(new { message = "Oturum açmamış." });
+        }
         var username = User.Identity.Name;
         //Console.WriteLine(username);
         if (username == null)
@@ -111,7 +116,7 @@ public class AccountController : Controller
         }
 
         var userRole = await _userManager.GetRolesAsync(user);
-        if (userRole == null)
+        if (userRole == null || !userRole.Any())
         {
             return BadRequest("Kullanıcıya ait rol bulunamadı.");
         }
@@ -153,6 +158,10 @@ public class AccountController : Controller
     public async Task<IActionResult> ListPersonel()
     {
         // Giriş yapmış olan şirket yöneticisini alalım
+        if (string.IsNullOrEmpty(User.Identity.Name))
+        {
+            return Unauthorized(new { message = "Oturum açmamış." });
+        }
         var manager = await _userManager.FindByNameAsync(User.Identity.Name);
         if (manager == null)
         {

@@ -2,23 +2,48 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using MyIdentityApp.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authorization;
 
+public class CVInfo
+{
+        public int Id { get; set; }
+        public string? Key { get; set; }
+        public string? Value { get; set; }
 
+        // Foreign key
+        public string? ApplicationUserId { get; set; }
+        public ApplicationUser? ApplicationUser { get; set; }
+}
+public class GetUserModel
+{
+    public string username { get; set; } = string.Empty;
+    public string email { get; set; } = string.Empty;
+    public string password { get; set; } = string.Empty;
+    public string role { get; set; } = string.Empty;
+    public string CompanyName { get; set; } = string.Empty;
+    public string FirstName { get; set; } = string.Empty;
+    public string LastName { get; set; } = string.Empty;
+    public DateTime BirthDate { get; set; }
+    public string Department { get; set; } = string.Empty;
+    public List<DateTime> LeaveDay { get; set; } = new List<DateTime>();
+}
 
 // TODO: dogum tarihlerii ekle
 namespace MyIdentityApp.Controllers{
-
     [Route("api/[controller]")]
     public class PersonalController : Controller
     {
+        private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly SignInManager<ApplicationUser> _signInManager;//auth
         private readonly RoleManager<IdentityRole> _roleManager;
 
         public PersonalController(UserManager<ApplicationUser> userManager, 
             SignInManager<ApplicationUser> signInManager,
+            ApplicationDbContext context,
             RoleManager<IdentityRole> roleManager)
         {
+            _context = context;
             _userManager = userManager;
             _signInManager = signInManager;
             _roleManager = roleManager;
@@ -27,6 +52,10 @@ namespace MyIdentityApp.Controllers{
     [HttpPost("addpersonel")] // TODO burda kalmistin
     public async Task<IActionResult> CreatePersonal([FromBody] CreateUserModel model)
     {
+        if (string.IsNullOrEmpty(User.Identity.Name))
+        {
+            return Unauthorized(new { message = "Oturum açmamış." });
+        }
         var manager = await _userManager.FindByNameAsync(User.Identity.Name);
         if (manager == null)
         {
@@ -37,8 +66,7 @@ namespace MyIdentityApp.Controllers{
         {
             return BadRequest(new { message = "wrong company name" });
         }
-        DateTime? birthDate = null;
-        Console.WriteLine(model.BirthDate);
+
         var user = new ApplicationUser
         {
             UserName = model.username,
@@ -46,7 +74,7 @@ namespace MyIdentityApp.Controllers{
             CompanyName = model.CompanyName,
             FirstName = model.FirstName,
             LastName = model.LastName,
-            BirthDate = birthDate,
+            BirthDate = model.BirthDate,
             Department = model.Department,
         };
 
@@ -111,11 +139,16 @@ namespace MyIdentityApp.Controllers{
                 return BadRequest("Kullanici bulunamadi.");
             }
             var userRole = await _userManager.GetRolesAsync(user);
-            if (userRole == null)
+            if (userRole == null || !userRole.Any())
             {
                 return BadRequest("Kullaniciya ait rol bulunamadi.");
             }
-            Console.WriteLine(user.BirthDate);
+                // Kullanıcının CV bilgilerini alalım
+            var cvInfos = await _context.CVInfos
+                .Where(c => c.ApplicationUserId == user.Id)
+                .ToListAsync();
+            var cvDictionary = cvInfos.ToDictionary(c => c.Key, c => c.Value);
+
             return Ok(new {
             FirstName = user.FirstName,
             LastName = user.LastName,
@@ -125,71 +158,161 @@ namespace MyIdentityApp.Controllers{
             Email = user.Email,
             Role = userRole[0],
             CompanyName = user.CompanyName,
+            CVInfos = cvDictionary
         });
         }
 
-        [HttpPut("updatepersonal")]
-        public async Task<IActionResult> UpdatePersonal() // burayida yaz
+        [HttpPut("updateprofile")]
+        public async Task<IActionResult> UpdateProfile([FromBody] CreateUserModel model)
         {
-            await Task.Delay(10);
-            return Ok("Personal bilgileri");
-        }
-
-        // Example method to update CV information
-
-
-        [HttpPut("updatecv")]
-        public async Task<IActionResult> UpdateCV([FromBody] Dictionary<string, string> cvData)
-        {
-            var username = User.Identity?.Name;
-            if (username == null)
+            try
             {
-                return Unauthorized("User not logged in.");
-            }
-
-            var user = await _userManager.FindByNameAsync(username);
-            if (user == null)
-            {
-                return NotFound("User not found.");
-            }
-
-            // Update the CV information
-            if (user.CVInfos == null)
-            {
-                user.CVInfos = new List<CVInfo>();
-            }
-
-            // Existing CVInfo'yu güncelle veya yenilerini ekle
-            foreach (var entry in cvData)
-            {
-                var existingCVInfo = user.CVInfos.FirstOrDefault(c => c.Key == entry.Key);
-                if (existingCVInfo != null)
-                {
-                    existingCVInfo.Value = entry.Value; // Mevcut kaydı güncelle
-                }
-                else
-                {
-                    user.CVInfos.Add(new CVInfo
+                if (string.IsNullOrEmpty(User.Identity.Name))
                     {
-                        Key = entry.Key,
-                        Value = entry.Value,
-                        ApplicationUserId = user.Id
-                    }); // Yeni bir kayıt ekle
+                        return Unauthorized(new { message = "Oturum açmamış." });
+                    }
+                var user = await _userManager.FindByNameAsync(User.Identity.Name);
+                if (user == null)
+                {
+                    Console.WriteLine("User not found");
+                    return Unauthorized(new {message = "Kullanıcı bulunamadı."});
                 }
-            }
+                // 'Manager' rolündeki kullanıcılar için ek yetki kontrolleri
+                if (User.IsInRole("Manager"))
+                {
+                    if (string.IsNullOrEmpty(model.username))
+                    {
+                        Console.WriteLine("Username is null or empty");
+                        return BadRequest(new {message = "Kullanıcı adı sağlanmalıdır."});
+                    }
 
-            var result = await _userManager.UpdateAsync(user);
-            if (result.Succeeded)
+                    var targetUser = await _userManager.FindByNameAsync(model.username);
+                    if (targetUser == null || targetUser.CompanyName != user.CompanyName)
+                    {
+                        Console.WriteLine("User not found or wrong company name" + model.username);
+                        return Forbid("Bu profil güncelleme işlemi için yetkiniz yok.");
+                    }
+                        if (model.FirstName != null)
+                        {
+                            targetUser.FirstName = model.FirstName;
+                        }
+                        if (model.LastName != null)
+                        {
+                            targetUser.LastName = model.LastName;
+                        }
+                        if (model.BirthDate != null)
+                        {
+                            targetUser.BirthDate = model.BirthDate;
+                        }
+                        if (model.Department != null)
+                        {
+                            targetUser.Department = model.Department;
+                        }
+                        if (model.email != null)
+                        {
+                            targetUser.Email = model.email;
+                        }
+
+                        var result = await _userManager.UpdateAsync(targetUser);
+                        if (result.Succeeded)
+                        {
+                            Console.WriteLine("Profile updated successfully." + targetUser.UserName);
+                            return Ok(new {message = "Profil bilgileri güncellendi."});
+                        }
+                        else
+                        {
+                            var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+                            Console.WriteLine("Update errors: " + errors);
+                            return BadRequest(new {message = "Profil bilgileri güncellenemedi: " + errors});
+                        }
+                        
+                }
+                return Forbid("Bu profil güncelleme işlemi için yetkiniz yok.");
+                
+            }
+            catch (Exception ex)
             {
-                return Ok("CV information updated successfully.");
+                Console.WriteLine("Exception: " + ex.Message);
+                return StatusCode(500, "Sunucu hatası.");
             }
-
-            return BadRequest("Error updating CV information.");
         }
 
+[HttpPut("updatecv")]
+public async Task<IActionResult> UpdateCV([FromBody] Dictionary<string, string> cvData)
+{
+    try
+    {
+        if (string.IsNullOrEmpty(User.Identity?.Name))
+        {
+            return Unauthorized(new { message = "Oturum açmamış." });
+        }
 
+        var user = await _userManager.FindByNameAsync(User.Identity.Name);
+        if (user == null)
+        {
+            Console.WriteLine("User not found");
+            return Unauthorized(new { message = "Kullanıcı bulunamadı." });
+        }
 
-        
+        if (User.IsInRole("Manager"))
+        {
+            if (!cvData.ContainsKey("username") || string.IsNullOrEmpty(cvData["username"]))
+            {
+                Console.WriteLine("Username is null or empty");
+                return BadRequest(new { message = "Kullanıcı adı sağlanmalıdır." });
+            }
+
+            var targetUser = await _userManager.FindByNameAsync(cvData["username"]);
+            if (targetUser == null || targetUser.CompanyName != user.CompanyName)
+            {
+                Console.WriteLine("User not found or wrong company name" + cvData["username"]);
+                return Forbid("Bu profil güncelleme işlemi için yetkiniz yok.");
+            }
+
+            if (cvData.Count > 1)
+            {
+                foreach (var item in cvData)
+                {
+                    if (item.Key == "username")
+                    {
+                        continue;
+                    }
+
+                    var cvInfo = await _context.CVInfos
+                        .Where(c => c.ApplicationUserId == targetUser.Id && c.Key == item.Key)
+                        .FirstOrDefaultAsync();
+
+                    if (cvInfo == null)
+                    {
+                        cvInfo = new CVInfo
+                        {
+                            Key = item.Key,
+                            Value = item.Value,
+                            ApplicationUserId = targetUser.Id
+                        };
+                        await _context.CVInfos.AddAsync(cvInfo);
+                    }
+                    else
+                    {
+                        cvInfo.Value = item.Value;
+                        _context.CVInfos.Update(cvInfo);
+                    }
+                }
+
+                await _context.SaveChangesAsync();
+                return Ok(new { message = "CV bilgileri güncellendi." });
+            }
+        }
+
+        return Forbid("Bu profil güncelleme işlemi için yetkiniz yok.");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine("Exception: " + ex.Message);
+        return StatusCode(500, "Sunucu hatası.");
+    }
+}
+
 
     }    
 }

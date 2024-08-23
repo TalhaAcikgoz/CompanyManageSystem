@@ -138,7 +138,6 @@ C:\Users\0\Desktop\MyIdentityApp\obj\Debug\net8.0\MyIdentityApp.genruntimeconfig
 C:\Users\0\Desktop\MyIdentityApp\obj\Debug\net8.0\ref\MyIdentityApp.dll
 C:\Users\Administrator\Desktop\MyIdentityApp\bin\Debug\net8.0\appsettings.Development.json
 C:\Users\Administrator\Desktop\MyIdentityApp\bin\Debug\net8.0\appsettings.json
-C:\Users\Administrator\Desktop\MyIdentityApp\bin\Debug\net8.0\app.db
 C:\Users\Administrator\Desktop\MyIdentityApp\bin\Debug\net8.0\MyIdentityApp.staticwebassets.runtime.json
 C:\Users\Administrator\Desktop\MyIdentityApp\bin\Debug\net8.0\MyIdentityApp.exe
 C:\Users\Administrator\Desktop\MyIdentityApp\bin\Debug\net8.0\MyIdentityApp.deps.json
@@ -416,3 +415,4 @@ C:\Users\0\Desktop\myidentity\obj\Debug\net8.0\refint\MyIdentityApp.dll
 C:\Users\0\Desktop\myidentity\obj\Debug\net8.0\MyIdentityApp.pdb
 C:\Users\0\Desktop\myidentity\obj\Debug\net8.0\MyIdentityApp.genruntimeconfig.cache
 C:\Users\0\Desktop\myidentity\obj\Debug\net8.0\ref\MyIdentityApp.dll
+C:\Users\Administrator\Desktop\MyIdentityApp\bin\Debug\net8.0\app.db

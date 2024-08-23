@@ -1,6 +1,6 @@
 {
   "Version": 1,
-  "Hash": "wRoO3nzrjFHHfJQIiYDPdt+yd18XqjbEjGpBGBIjE/c=",
+  "Hash": "540uW24e8F+wId/R1iI9+/8dxSZA5moZ6ou4OvAUTco=",
   "Source": "MyIdentityApp",
   "BasePath": "_content/MyIdentityApp",
   "Mode": "Default",
@@ -2542,44 +2542,6 @@
       "CopyToOutputDirectory": "Never",
       "CopyToPublishDirectory": "PreserveNewest",
       "OriginalItemSpec": "wwwroot\\Register.html"
-    },
-    {
-      "Identity": "C:\\Users\\Administrator\\Desktop\\MyIdentityApp\\wwwroot\\uploads\\ariza-degisim-form-sayfalar-1.pdf",
-      "SourceId": "MyIdentityApp",
-      "SourceType": "Discovered",
-      "ContentRoot": "C:\\Users\\Administrator\\Desktop\\MyIdentityApp\\wwwroot\\",
-      "BasePath": "_content/MyIdentityApp",
-      "RelativePath": "uploads/ariza-degisim-form-sayfalar-1.pdf",
-      "AssetKind": "All",
-      "AssetMode": "All",
-      "AssetRole": "Primary",
-      "AssetMergeBehavior": "PreferTarget",
-      "AssetMergeSource": "",
-      "RelatedAsset": "",
-      "AssetTraitName": "",
-      "AssetTraitValue": "",
-      "CopyToOutputDirectory": "Never",
-      "CopyToPublishDirectory": "PreserveNewest",
-      "OriginalItemSpec": "wwwroot\\uploads\\ariza-degisim-form-sayfalar-1.pdf"
-    },
-    {
-      "Identity": "C:\\Users\\Administrator\\Desktop\\MyIdentityApp\\wwwroot\\uploads\\Personel Yönetimi Uygulaması.pdf",
-      "SourceId": "MyIdentityApp",
-      "SourceType": "Discovered",
-      "ContentRoot": "C:\\Users\\Administrator\\Desktop\\MyIdentityApp\\wwwroot\\",
-      "BasePath": "_content/MyIdentityApp",
-      "RelativePath": "uploads/Personel Yönetimi Uygulaması.pdf",
-      "AssetKind": "All",
-      "AssetMode": "All",
-      "AssetRole": "Primary",
-      "AssetMergeBehavior": "PreferTarget",
-      "AssetMergeSource": "",
-      "RelatedAsset": "",
-      "AssetTraitName": "",
-      "AssetTraitValue": "",
-      "CopyToOutputDirectory": "Never",
-      "CopyToPublishDirectory": "PreserveNewest",
-      "OriginalItemSpec": "wwwroot\\uploads\\Personel Yönetimi Uygulaması.pdf"
     }
   ]
 }

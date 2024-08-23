@@ -15,6 +15,7 @@ namespace MyIdentityApp.Data {
             : base(options)
         {
         }
+        public DbSet<CVInfo> CVInfos { get; set; }
     }
 
     public class CompanyEntity
@@ -24,7 +25,7 @@ namespace MyIdentityApp.Data {
         public string? CompanyName { get; set; }
     }
 
-    public class CVInfo
+/*     public class CVInfo
     {
         public int Id { get; set; }
         public string? Key { get; set; }
@@ -33,7 +34,7 @@ namespace MyIdentityApp.Data {
         // Foreign key
         public string? ApplicationUserId { get; set; }
         public ApplicationUser? ApplicationUser { get; set; }
-    }
+    } */
 
     public class ApplicationUser : IdentityUser
     {
@@ -52,10 +53,12 @@ namespace MyIdentityApp.Data {
 
     public class AccountController : Controller
     {
+        private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
 
-        public AccountController(UserManager<ApplicationUser> userManager)
+        public AccountController(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
         {
+            _context = context;
             _userManager = userManager;
         }
     }

@@ -2,20 +2,17 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using MyIdentityApp.Data;
 
 #nullable disable
 
-namespace MyIdentityApp.Data.Migrations
+namespace MyIdentityApp.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20240823070606_UpdateAspNetUsersSchema3")]
-    partial class UpdateAspNetUsersSchema3
+    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
     {
-        /// <inheritdoc />
-        protected override void BuildTargetModel(ModelBuilder modelBuilder)
+        protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.8");
@@ -166,7 +163,7 @@ namespace MyIdentityApp.Data.Migrations
                         .IsConcurrencyToken()
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("CvFilePath")
+                    b.Property<string>("Department")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Email")
@@ -233,6 +230,28 @@ namespace MyIdentityApp.Data.Migrations
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
+            modelBuilder.Entity("MyIdentityApp.Data.CVInfo", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("ApplicationUserId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Key")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Value")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ApplicationUserId");
+
+                    b.ToTable("CVInfos");
+                });
+
             modelBuilder.Entity("MyIdentityApp.Data.CompanyEntity", b =>
                 {
                     b.Property<int>("Id")
@@ -296,6 +315,20 @@ namespace MyIdentityApp.Data.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("MyIdentityApp.Data.CVInfo", b =>
+                {
+                    b.HasOne("MyIdentityApp.Data.ApplicationUser", "ApplicationUser")
+                        .WithMany("CVInfos")
+                        .HasForeignKey("ApplicationUserId");
+
+                    b.Navigation("ApplicationUser");
+                });
+
+            modelBuilder.Entity("MyIdentityApp.Data.ApplicationUser", b =>
+                {
+                    b.Navigation("CVInfos");
                 });
 #pragma warning restore 612, 618
         }

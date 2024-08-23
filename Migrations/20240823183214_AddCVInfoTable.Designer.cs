@@ -8,11 +8,11 @@ using MyIdentityApp.Data;
 
 #nullable disable
 
-namespace MyIdentityApp.Data.Migrations
+namespace MyIdentityApp.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20240823063602_UpdateAspNetUsersSchema2")]
-    partial class UpdateAspNetUsersSchema2
+    [Migration("20240823183214_AddCVInfoTable")]
+    partial class AddCVInfoTable
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -156,6 +156,9 @@ namespace MyIdentityApp.Data.Migrations
                     b.Property<int>("AccessFailedCount")
                         .HasColumnType("INTEGER");
 
+                    b.Property<DateTime?>("BirthDate")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("CompanyName")
                         .HasColumnType("TEXT");
 
@@ -163,7 +166,7 @@ namespace MyIdentityApp.Data.Migrations
                         .IsConcurrencyToken()
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("CvFilePath")
+                    b.Property<string>("Department")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Email")
@@ -173,7 +176,10 @@ namespace MyIdentityApp.Data.Migrations
                     b.Property<bool>("EmailConfirmed")
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("FullName")
+                    b.Property<string>("FirstName")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("LastName")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("LeaveDay")
@@ -208,6 +214,9 @@ namespace MyIdentityApp.Data.Migrations
                     b.Property<bool>("TwoFactorEnabled")
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("Unit")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("UserName")
                         .HasMaxLength(256)
                         .HasColumnType("TEXT");
@@ -222,6 +231,28 @@ namespace MyIdentityApp.Data.Migrations
                         .HasDatabaseName("UserNameIndex");
 
                     b.ToTable("AspNetUsers", (string)null);
+                });
+
+            modelBuilder.Entity("MyIdentityApp.Data.CVInfo", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("ApplicationUserId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Key")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Value")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ApplicationUserId");
+
+                    b.ToTable("CVInfos");
                 });
 
             modelBuilder.Entity("MyIdentityApp.Data.CompanyEntity", b =>
@@ -287,6 +318,20 @@ namespace MyIdentityApp.Data.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("MyIdentityApp.Data.CVInfo", b =>
+                {
+                    b.HasOne("MyIdentityApp.Data.ApplicationUser", "ApplicationUser")
+                        .WithMany("CVInfos")
+                        .HasForeignKey("ApplicationUserId");
+
+                    b.Navigation("ApplicationUser");
+                });
+
+            modelBuilder.Entity("MyIdentityApp.Data.ApplicationUser", b =>
+                {
+                    b.Navigation("CVInfos");
                 });
 #pragma warning restore 612, 618
         }

@@ -38,10 +38,6 @@ namespace MyIdentityApp.Controllers{
             return BadRequest(new { message = "wrong company name" });
         }
         DateTime? birthDate = null;
-        if (!string.IsNullOrEmpty(model.BirthDate))
-        {
-            birthDate = DateTime.ParseExact(model.BirthDate, "yyyy-MM-dd", null);
-        }
         Console.WriteLine(model.BirthDate);
         var user = new ApplicationUser
         {

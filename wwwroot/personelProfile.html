@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personel Profile</title>
+</head>
+<body>
+    <h1>Personel Profile</h1>
+    <div>
+        <h3>Personel Bilgileri</h3>
+        <p>Ad: <span id="name"></span></p>
+        <p>Soyad: <span id="surname"></span></p>
+        <p>Kullanıcı Adı: <span id="username"></span></p>
+        <p>Doğum Tarihi: <span id="dob"></span></p>
+        <p>Çalıştığı Birim: <span id="department"></span></p>
+        <p>Email: <span id="email"></span></p>
+    </div>
+    
+    <div>
+        <h3>CV Bilgileri</h3>
+        <form id="cvForm">
+            <label for="education">Eğitim:</label>
+            <input type="text" id="education" name="education"><br>
+    
+            <label for="experience">Deneyim:</label>
+            <input type="text" id="experience" name="experience"><br>
+    
+            <label for="skills">Yetenekler:</label>
+            <input type="text" id="skills" name="skills"><br>
+    
+            <label for="other">Diğer:</label>
+            <input type="text" id="other" name="other"><br>
+    
+            <button type="submit">CV Güncelle</button>
+        </form>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const username = urlParams.get('username');
+
+            if (username) {
+                fetch(`http://localhost:5057/api/personal/getpersonaldetails?username=${username}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Success:', data);
+                    document.getElementById('name').textContent = data.firstName;
+                    document.getElementById('surname').textContent = data.lastName;
+                    document.getElementById('username').textContent = data.username;
+                    
+                    // Tarihi sadece gün olarak göster
+                    if (data.birthDate) {
+                        const birthDate = new Date(data.birthDate);
+                        document.getElementById('dob').textContent = birthDate.toISOString().split('T')[0];
+                    }
+                    
+                    document.getElementById('department').textContent = data.department;
+                    document.getElementById('email').textContent = data.email;
+                    
+                    // CV bilgilerini form alanlarına yerleştirme
+                    document.getElementById('education').value = data.education || '';
+                    document.getElementById('experience').value = data.experience || '';
+                    document.getElementById('skills').value = data.skills || '';
+                    document.getElementById('other').value = data.other || '';
+                })
+                .catch(error => console.error('Error:', error));
+            }
+
+            document.getElementById('cvForm').addEventListener('submit', function(event) {
+               event.preventDefault();
+                    
+               const cvData = {
+                   education: document.getElementById('education').value,
+                   experience: document.getElementById('experience').value,
+                   skills: document.getElementById('skills').value,
+                   other: document.getElementById('other').value
+               };
+           
+               fetch('http://localhost:5057/api/personal/updatecv', {
+                   method: 'POST',
+                   headers: {
+                       'Content-Type': 'application/json'
+                   },
+                   body: JSON.stringify(cvData)
+               })
+               .then(response => response.json())
+               .then(data => {
+                   alert('CV bilgileri başarıyla güncellendi.');
+               })
+               .catch(error => console.error('Error:', error));
+           });
+        });
+    </script>
+</body>
+</html>

@@ -4,14 +4,7 @@ using MyIdentityApp.Data;
 using Microsoft.EntityFrameworkCore;
 
 
-public class CreateUserModel
-{
-    public string username { get; set; } = string.Empty;
-    public string email { get; set; } = string.Empty;
-    public string password { get; set; } = string.Empty;
-    public string role { get; set; } = string.Empty;
-    public string CompanyName { get; set; } = string.Empty;
-}
+
 // TODO: dogum tarihlerii ekle
 namespace MyIdentityApp.Controllers{
 
@@ -31,7 +24,7 @@ namespace MyIdentityApp.Controllers{
             _roleManager = roleManager;
         }
 
-    [HttpPost("addpersonel")]
+    [HttpPost("addpersonel")] // TODO burda kalmistin
     public async Task<IActionResult> CreatePersonal([FromBody] CreateUserModel model)
     {
         var manager = await _userManager.FindByNameAsync(User.Identity.Name);
@@ -44,12 +37,21 @@ namespace MyIdentityApp.Controllers{
         {
             return BadRequest(new { message = "wrong company name" });
         }
-
+        DateTime? birthDate = null;
+        if (!string.IsNullOrEmpty(model.BirthDate))
+        {
+            birthDate = DateTime.ParseExact(model.BirthDate, "yyyy-MM-dd", null);
+        }
+        Console.WriteLine(model.BirthDate);
         var user = new ApplicationUser
         {
             UserName = model.username,
             Email = model.email,
             CompanyName = model.CompanyName,
+            FirstName = model.FirstName,
+            LastName = model.LastName,
+            BirthDate = birthDate,
+            Department = model.Department,
         };
 
         var result = await _userManager.CreateAsync(user, model.password);
@@ -83,7 +85,6 @@ namespace MyIdentityApp.Controllers{
         var usersInCompany = await _userManager.Users
             .Where(u => u.CompanyName == manager.CompanyName)
             .ToListAsync();
-        Console.WriteLine("86 Personal.cs :" + usersInCompany.Count);
 
         // Şirket personelini listelemek için bir liste oluşturalım
         var personelList = new List<object>();
@@ -100,15 +101,15 @@ namespace MyIdentityApp.Controllers{
                 });
             }
         }
-        Console.WriteLine("104 Personal.cs :" + personelList.Count);
 
         return Ok(personelList);
     }
 
-        [HttpGet("getuser")]
+        [HttpGet("getpersonaldetails")]
         public async Task<IActionResult> GetUser(string username)
         {
             var user = await _userManager.FindByNameAsync(username);
+
             if (user == null)
             {
                 return BadRequest("Kullanici bulunamadi.");
@@ -118,7 +119,17 @@ namespace MyIdentityApp.Controllers{
             {
                 return BadRequest("Kullaniciya ait rol bulunamadi.");
             }
-            return Ok(user.UserName +'\n'+ user.Email+'\n'+ userRole[0]);
+            Console.WriteLine(user.BirthDate);
+            return Ok(new {
+            FirstName = user.FirstName,
+            LastName = user.LastName,
+            Username = user.UserName,
+            BirthDate = user.BirthDate,
+            Department = user.Department,
+            Email = user.Email,
+            Role = userRole[0],
+            CompanyName = user.CompanyName,
+        });
         }
 
         [HttpPut("updatepersonal")]
@@ -127,9 +138,62 @@ namespace MyIdentityApp.Controllers{
             await Task.Delay(10);
             return Ok("Personal bilgileri");
         }
-    }
+
+        // Example method to update CV information
 
 
-    
-    
+        [HttpPut("updatecv")]
+        public async Task<IActionResult> UpdateCV([FromBody] Dictionary<string, string> cvData)
+        {
+            var username = User.Identity?.Name;
+            if (username == null)
+            {
+                return Unauthorized("User not logged in.");
+            }
+
+            var user = await _userManager.FindByNameAsync(username);
+            if (user == null)
+            {
+                return NotFound("User not found.");
+            }
+
+            // Update the CV information
+            if (user.CVInfos == null)
+            {
+                user.CVInfos = new List<CVInfo>();
+            }
+
+            // Existing CVInfo'yu güncelle veya yenilerini ekle
+            foreach (var entry in cvData)
+            {
+                var existingCVInfo = user.CVInfos.FirstOrDefault(c => c.Key == entry.Key);
+                if (existingCVInfo != null)
+                {
+                    existingCVInfo.Value = entry.Value; // Mevcut kaydı güncelle
+                }
+                else
+                {
+                    user.CVInfos.Add(new CVInfo
+                    {
+                        Key = entry.Key,
+                        Value = entry.Value,
+                        ApplicationUserId = user.Id
+                    }); // Yeni bir kayıt ekle
+                }
+            }
+
+            var result = await _userManager.UpdateAsync(user);
+            if (result.Succeeded)
+            {
+                return Ok("CV information updated successfully.");
+            }
+
+            return BadRequest("Error updating CV information.");
+        }
+
+
+
+        
+
+    }    
 }

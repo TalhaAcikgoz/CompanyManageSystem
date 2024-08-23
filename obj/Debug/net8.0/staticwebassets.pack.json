@@ -281,8 +281,20 @@
       "PackagePath": "staticwebassets\\personelList.html"
     },
     {
+      "Id": "C:\\Users\\Administrator\\Desktop\\MyIdentityApp\\wwwroot\\personelProfile.html",
+      "PackagePath": "staticwebassets\\personelProfile.html"
+    },
+    {
       "Id": "C:\\Users\\Administrator\\Desktop\\MyIdentityApp\\wwwroot\\personelRegister.html",
       "PackagePath": "staticwebassets\\personelRegister.html"
+    },
+    {
+      "Id": "C:\\Users\\Administrator\\Desktop\\MyIdentityApp\\wwwroot\\uploads\\Personel Yönetimi Uygulaması.pdf",
+      "PackagePath": "staticwebassets\\uploads\\Personel Yönetimi Uygulaması.pdf"
+    },
+    {
+      "Id": "C:\\Users\\Administrator\\Desktop\\MyIdentityApp\\wwwroot\\uploads\\ariza-degisim-form-sayfalar-1.pdf",
+      "PackagePath": "staticwebassets\\uploads\\ariza-degisim-form-sayfalar-1.pdf"
     },
     {
       "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.MyIdentityApp.Microsoft.AspNetCore.StaticWebAssets.props",

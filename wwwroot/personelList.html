@@ -40,7 +40,10 @@
                 tableBody.innerHTML = ''; // Önceki içerikleri temizleyelim
                 data.forEach(personel => {
                     const row = document.createElement('tr');
-                    row.innerHTML = `<td>${personel.userName}</td><td>${personel.email}</td>`;
+                    row.innerHTML = `
+                        <td><a href="personelprofile.html?username=${personel.userName}">${personel.userName}</a></td>
+                        <td>${personel.email}</td>
+                    `;
                     tableBody.appendChild(row);
                 });
             })

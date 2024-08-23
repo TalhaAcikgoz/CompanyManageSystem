@@ -24,11 +24,28 @@ namespace MyIdentityApp.Data {
         public string? CompanyName { get; set; }
     }
 
+    public class CVInfo
+    {
+        public int Id { get; set; }
+        public string? Key { get; set; }
+        public string? Value { get; set; }
+
+        // Foreign key
+        public string? ApplicationUserId { get; set; }
+        public ApplicationUser? ApplicationUser { get; set; }
+    }
+
     public class ApplicationUser : IdentityUser
     {
-        public string? FullName { get; set; }
+        public string? FirstName { get; set; }
+        public string? LastName { get; set; }
+        public DateTime? BirthDate { get; set; }
+        public string? Unit { get; set; }
         public string? CompanyName { get; set; }
         public List<DateTime>? LeaveDay { get; set; }
+        public string? Department { get; set; }
+        public ICollection<CVInfo>? CVInfos { get; set; }
+        
     }
 
 

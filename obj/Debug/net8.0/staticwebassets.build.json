@@ -1,6 +1,6 @@
 {
   "Version": 1,
-  "Hash": "0KfVD39B8+0OT5+J/wz36T5vmv+9zhOd8+XAVd4iiRs=",
+  "Hash": "wRoO3nzrjFHHfJQIiYDPdt+yd18XqjbEjGpBGBIjE/c=",
   "Source": "MyIdentityApp",
   "BasePath": "_content/MyIdentityApp",
   "Mode": "Default",
@@ -2487,6 +2487,25 @@
       "OriginalItemSpec": "wwwroot\\personelList.html"
     },
     {
+      "Identity": "C:\\Users\\Administrator\\Desktop\\MyIdentityApp\\wwwroot\\personelProfile.html",
+      "SourceId": "MyIdentityApp",
+      "SourceType": "Discovered",
+      "ContentRoot": "C:\\Users\\Administrator\\Desktop\\MyIdentityApp\\wwwroot\\",
+      "BasePath": "_content/MyIdentityApp",
+      "RelativePath": "personelProfile.html",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "AssetMergeBehavior": "PreferTarget",
+      "AssetMergeSource": "",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot\\personelProfile.html"
+    },
+    {
       "Identity": "C:\\Users\\Administrator\\Desktop\\MyIdentityApp\\wwwroot\\personelRegister.html",
       "SourceId": "MyIdentityApp",
       "SourceType": "Discovered",
@@ -2523,6 +2542,44 @@
       "CopyToOutputDirectory": "Never",
       "CopyToPublishDirectory": "PreserveNewest",
       "OriginalItemSpec": "wwwroot\\Register.html"
+    },
+    {
+      "Identity": "C:\\Users\\Administrator\\Desktop\\MyIdentityApp\\wwwroot\\uploads\\ariza-degisim-form-sayfalar-1.pdf",
+      "SourceId": "MyIdentityApp",
+      "SourceType": "Discovered",
+      "ContentRoot": "C:\\Users\\Administrator\\Desktop\\MyIdentityApp\\wwwroot\\",
+      "BasePath": "_content/MyIdentityApp",
+      "RelativePath": "uploads/ariza-degisim-form-sayfalar-1.pdf",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "AssetMergeBehavior": "PreferTarget",
+      "AssetMergeSource": "",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot\\uploads\\ariza-degisim-form-sayfalar-1.pdf"
+    },
+    {
+      "Identity": "C:\\Users\\Administrator\\Desktop\\MyIdentityApp\\wwwroot\\uploads\\Personel Yönetimi Uygulaması.pdf",
+      "SourceId": "MyIdentityApp",
+      "SourceType": "Discovered",
+      "ContentRoot": "C:\\Users\\Administrator\\Desktop\\MyIdentityApp\\wwwroot\\",
+      "BasePath": "_content/MyIdentityApp",
+      "RelativePath": "uploads/Personel Yönetimi Uygulaması.pdf",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "AssetMergeBehavior": "PreferTarget",
+      "AssetMergeSource": "",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot\\uploads\\Personel Yönetimi Uygulaması.pdf"
     }
   ]
 }

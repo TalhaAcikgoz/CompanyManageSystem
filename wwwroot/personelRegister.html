@@ -12,6 +12,10 @@
         <input type="email" id="email" placeholder="Email" required><br>
         <input type="password" id="password" placeholder="Password" required><br>
         <input type="text" id="companyName" placeholder="Company Name" required><br>
+        <input type="text" id="FirstName" placeholder="First Name" required><br>
+        <input type="text" id="LastName" placeholder="Last Name" required><br>
+        <input type="date" id="BirthDate" placeholder="Date of Birth" required><br>
+        <input type="text" id="department" placeholder="Department" required><br>
         <button type="submit">Add Personel</button>
     </form>
 
@@ -24,6 +28,10 @@
                 Email: document.getElementById('email').value,
                 Password: document.getElementById('password').value,
                 CompanyName: document.getElementById('companyName').value,
+                FirstName: document.getElementById('FirstName').value,
+                LastName: document.getElementById('LastName').value,
+                BirthDate: document.getElementById('BirthDate').value,
+                Department: document.getElementById('department').value,
                 Role: 'Personal',
             };
 

@@ -18,7 +18,7 @@ public class CreateUserModel
     public string LastName { get; set; } = string.Empty;
     public DateTime BirthDate { get; set; }
     public string Department { get; set; } = string.Empty;
-    public List<DateTime> LeaveDay { get; set; } = new List<DateTime>();
+    public ICollection<LeavePeriod>? LeavePeriods { get; set; }
     public Dictionary<string, string> CVInfos { get; set; } = new Dictionary<string, string>();
 }
 

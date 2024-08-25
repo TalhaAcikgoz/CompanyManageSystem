@@ -54,11 +54,90 @@
     <div id="managerSection" class="role-specific" style="display: none;">
         <button class="button" onclick="location.href='personelRegister.html'">Add Personel</button>
         <button class="button" onclick="location.href='personelList.html'">List Personel</button>
+        <h3>Personel İzin Talepleri</h3>
+        <table id="leaveListManager">
+            <thead>
+                <tr>
+                    <th>Username</th>
+                    <th>Başlangıç Tarihi</th>
+                    <th>Bitiş Tarihi</th>
+                    <th>Sebep</th>
+                    <th>Durum</th>
+                    <th>Onayla</th>
+                    <th>Reddet</th>
+                </tr>
+            </thead>
+            <tbody id="managerLeaveList"></tbody>
+        </table>
+        <div>
+            
+            <h3>Masraf Talepleri</h3>
+            <table id="costListManager">
+                <thead>
+                    <tr>
+                        <th>Username</th>
+                        <th>Miktar</th>
+                        <th>Sebep</th>
+                        <th>Durum</th>
+                        <th>Onayla</th>
+                        <th>Sil</th>
+                    </tr>
+                </thead>
+                <tbody id="managerCostList"></tbody>
+            </table>
+        </div>
+        
+        <h3>Yaklaşan Doğum Günleri</h3>
+        <table id="birthdayTable">
+            <thead>
+                <tr>
+                    <th>Personel Adı</th>
+                    <th>Doğum Tarihi</th>
+                    <th>Kalan Gün</th>
+                </tr>
+            </thead>
+            <tbody id="birthdayList"></tbody>
+        </table>
+
     </div>
 
     <div id="personelSection" class="role-specific" style="display: none;">
         <p>Your Company: <span id="companyName">[Company Name]</span></p>
         <button class="button" id="profileButton">Your Profile</button>
+
+        <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+        
+        <h3>İzin Al</h3>
+        <input type="text" id="leaveDates" placeholder="Tarih aralığını seçin">
+        <textarea id="reason" placeholder="İzin nedeni"></textarea>
+        <button id="leaveButton">İzin Al</button>
+        <div>
+            <h3>Alinan İzinler</h3>
+            <ul id="leaveList"></ul>
+        </div>
+
+        <h3>Masraf Talebi</h3>
+        <input type="number" id="costAmount" placeholder="Miktar">
+        <textarea id="costReason" placeholder="Sebep"></textarea>
+        <button class="button" id="costButton" onclick="addCost()">Masraf Talebi</button>
+        <div>
+            <h3>Alinan Masraflar</h3>
+            <table id="costList">
+            </table>
+        </div>
+
+        <h3>Yaklaşan Doğum Günleri</h3>
+        <table id="birthdayTable1">
+            <thead>
+                <tr>
+                    <th>Personel Adı</th>
+                    <th>Doğum Tarihi</th>
+                    <th>Kalan Gün</th>
+                </tr>
+            </thead>
+            <tbody id="birthdayList1"></tbody>
+        </table>
     </div>
 
     <button class="button" id="logoutButton" onclick="logout()">Logout</button>

@@ -38,7 +38,7 @@
                 console.log('Success:', data);
                 const tableBody = document.querySelector('#personelTable tbody');
                 tableBody.innerHTML = ''; // Önceki içerikleri temizleyelim
-                data.forEach(personel => {
+                data.$values.forEach(personel => {
                     const row = document.createElement('tr');
                     row.innerHTML = `
                         <td><a href="personelprofile.html?username=${personel.userName}">${personel.userName}</a></td>

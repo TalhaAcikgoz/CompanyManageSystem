@@ -14,6 +14,7 @@ public class CVInfo
         public string? ApplicationUserId { get; set; }
         public ApplicationUser? ApplicationUser { get; set; }
 }
+
 public class GetUserModel
 {
     public string username { get; set; } = string.Empty;
@@ -95,8 +96,8 @@ namespace MyIdentityApp.Controllers{
         return BadRequest(new { message = "user creation fail", errors = errorMessages });
     }
 
-        [HttpGet("listpersonel")]
-        public async Task<IActionResult> ListPersonel()
+    [HttpGet("listpersonel")]
+    public async Task<IActionResult> ListPersonel()
     {
         // Giriş yapmış olan şirket yöneticisini alalım
         var manager = await _userManager.FindByNameAsync(User.Identity.Name);
@@ -128,9 +129,8 @@ namespace MyIdentityApp.Controllers{
 
         return Ok(personelList);
     }
-
-        [HttpGet("getpersonaldetails")]
-        public async Task<IActionResult> GetUser(string username)
+    [HttpGet("getpersonaldetails")]
+    public async Task<IActionResult> GetUser(string username)
         {
             var user = await _userManager.FindByNameAsync(username);
 
@@ -161,9 +161,8 @@ namespace MyIdentityApp.Controllers{
             CVInfos = cvDictionary
         });
         }
-
-        [HttpPut("updateprofile")]
-        public async Task<IActionResult> UpdateProfile([FromBody] CreateUserModel model)
+    [HttpPut("updateprofile")]
+    public async Task<IActionResult> UpdateProfile([FromBody] CreateUserModel model)
         {
             try
             {
@@ -240,9 +239,8 @@ namespace MyIdentityApp.Controllers{
                 return StatusCode(500, "Sunucu hatası.");
             }
         }
-
-        [HttpPut("updatecv")]
-        public async Task<IActionResult> UpdateCV([FromBody] Dictionary<string, string> cvData)
+    [HttpPut("updatecv")]
+    public async Task<IActionResult> UpdateCV([FromBody] Dictionary<string, string> cvData)
 {
     try
     {
@@ -320,6 +318,324 @@ namespace MyIdentityApp.Controllers{
         return StatusCode(500, "Sunucu hatası.");
     }
 }
+
+[HttpPost("addleave")]
+public async Task<IActionResult> AddLeave([FromBody] LeavePeriod leavePeriod, [FromQuery] string username)
+{
+    var user = await _userManager.FindByNameAsync(username);
+    if (user == null)
+    {
+        return BadRequest(new { message = "Kullanıcı bulunamadı." });
+    }
+
+    leavePeriod.ApplicationUserId = user.Id;
+
+    _context.LeavePeriods.Add(leavePeriod);
+    await _context.SaveChangesAsync();
+    if (user.LeavePeriods == null)
+    {
+        Console.WriteLine("Leave periods is null");
+    }
+
+    return Ok(new { message = "İzin başarıyla eklendi." });
+}
+
+
+[HttpPut("approveleave")]
+public async Task<IActionResult> ApproveLeave(int leaveId)
+{
+    Console.WriteLine("Leave id: " + leaveId);
+    var leavePeriod = await _context.LeavePeriods.FindAsync(leaveId);
+    if (leavePeriod == null)
+    {
+        return NotFound(new { message = "İzin bulunamadı." });
+    }
+
+    leavePeriod.IsApproved = true;
+    await _context.SaveChangesAsync();
+
+    return Ok(new { message = "İzin başarıyla onaylandı." });
+}
+
+[HttpGet("getallleaves")]
+public async Task<IActionResult> GetAllLeaves()
+{
+    var manager = await _userManager.FindByNameAsync(User.Identity.Name);
+    if (manager == null)
+    {
+        return Unauthorized(new { message = "Oturum açmamış." });
+    }
+    var usersInCompany = await _userManager.Users
+        .Where(u => u.CompanyName == manager.CompanyName)
+        .ToListAsync();
+    
+    var personelList = new List<object>();
+    Console.WriteLine("Users in company: " + usersInCompany.Count);
+    foreach (var user in usersInCompany)
+    {
+        Console.WriteLine("User: " + user.UserName);
+        if (await _userManager.IsInRoleAsync(user, "Personal"))
+        {
+            var leaves = await _context.LeavePeriods
+                .Where(lp => lp.ApplicationUser.Id == user.Id)
+                .Select(lp => new
+                {
+                    lp.Id,
+                    lp.StartDate,
+                    lp.EndDate,
+                    lp.Reason,
+                    lp.IsApproved,
+                    lp.ApplicationUser.UserName
+                })
+                .ToListAsync();
+
+            if (leaves.Any())
+            {
+                personelList.Add(new
+                {
+                    user.UserName,
+                    Leaves = leaves
+                });
+            }
+        }
+
+    }
+    return Ok(personelList);
+}
+
+[HttpGet("getleaves")]
+public async Task<IActionResult> GetLeaves(string username)
+{
+    var user = await _userManager.FindByNameAsync(username);
+    if (user == null)
+    {
+        return NotFound(new { message = "Kullanıcı bulunamadı." });
+    }
+    
+    var leaves = await _context.LeavePeriods
+                               .Where(lp => lp.ApplicationUser.Id == user.Id)
+                               .Select(lp => new
+                               {
+                                   lp.StartDate,
+                                   lp.EndDate,
+                                   lp.Reason,
+                                   lp.Id,
+                                   lp.IsApproved,
+                                   lp.ApplicationUser.UserName
+                               })
+                               .ToListAsync();
+
+    if (!leaves.Any())
+    {
+        return Ok(new { message = "İzin bulunamadı." });
+    }
+
+    return Ok(leaves);
+}
+
+[HttpDelete("cancelleave")]
+public async Task<IActionResult> CancelLeave(string username, int leaveId)
+{
+    try
+    {
+        var user = await _userManager.FindByNameAsync(username);
+        if (user == null)
+        {
+            return NotFound(new { message = "Kullanıcı bulunamadı." });
+        }
+
+        // LeavePeriods veritabanından sorgulandı
+        var leavePeriod = await _context.LeavePeriods
+                                        .Where(lp => lp.ApplicationUser.Id == user.Id && lp.Id == leaveId)
+                                        .FirstOrDefaultAsync();
+
+        if (leavePeriod == null)
+        {
+            return NotFound(new { message = "İzin bulunamadı." });
+        }
+
+        _context.LeavePeriods.Remove(leavePeriod);
+
+        var result = await _context.SaveChangesAsync();
+        if (result <= 0)
+        {
+            return StatusCode(StatusCodes.Status500InternalServerError, new { message = "İzin iptal edilirken bir hata oluştu." });
+        }
+
+        return Ok(new { message = "İzin başarıyla iptal edildi." });
+    }
+    catch (Exception ex)
+    {
+        return StatusCode(StatusCodes.Status500InternalServerError, new { message = ex.Message });
+    }
+}
+
+
+[HttpPost("addcost")]
+public async Task<IActionResult> AddCost([FromBody] Cost cost)
+{
+    var user = await _userManager.FindByNameAsync(cost.Username);
+    if (user == null)
+    {
+        return BadRequest(new { message = "Kullanıcı bulunamadı." });
+    }
+
+    cost.ApplicationUserId = user.Id;
+    cost.Date = DateTime.Now;
+
+    _context.Costs.Add(cost);
+    await _context.SaveChangesAsync();
+
+    return Ok(new { message = "Masraf başarıyla eklendi." });
+}
+
+[HttpGet("getallcosts")]
+public async Task<IActionResult> GetAllCosts()
+{
+    var manager = await _userManager.FindByNameAsync(User.Identity.Name);
+    if (manager == null)
+    {
+        return Unauthorized(new { message = "Oturum açmamış." });
+    }
+    var usersInCompany = await _userManager.Users
+        .Where(u => u.CompanyName == manager.CompanyName)
+        .ToListAsync();
+    
+    var personelList = new List<object>();
+    Console.WriteLine("Users in company: " + usersInCompany.Count);
+    foreach (var user in usersInCompany)
+    {
+        Console.WriteLine("User: " + user.UserName);
+        if (await _userManager.IsInRoleAsync(user, "Personal"))
+        {
+            var costs = await _context.Costs
+                .Where(c => c.ApplicationUser.Id == user.Id)
+                .Select(c => new
+                {
+                    c.Id,
+                    c.Reason,
+                    c.Amount,
+                    c.Date,
+                    c.IsApproved,
+                    c.ApplicationUser.UserName
+                })
+                .ToListAsync();
+
+            if (costs.Any())
+            {
+                personelList.Add(new
+                {
+                    user.UserName,
+                    Costs = costs
+                });
+            }
+        }
+
+    }
+    return Ok(personelList);
+}
+
+[HttpGet("getcosts")]
+public async Task<IActionResult> GetCosts(string username)
+{
+    var user = await _userManager.FindByNameAsync(username);
+    if (user == null)
+    {
+        return NotFound(new { message = "Kullanıcı bulunamadı." });
+    }
+
+    var costs = await _context.Costs
+                               .Where(c => c.ApplicationUser.Id == user.Id)
+                               .Select(c => new
+                               {
+                                   c.Id,
+                                   c.Reason,
+                                   c.Amount,
+                                   c.Date,
+                                   c.IsApproved,
+                                   c.ApplicationUser.UserName
+                               })
+                               .ToListAsync();
+
+    if (!costs.Any())
+    {
+        return Ok(new { message = "Masraf bulunamadı." });
+    }
+
+    return Ok(costs);
+}
+
+[HttpPut("approvecost")]
+public async Task<IActionResult> ApproveCost(int costId)
+{
+    var cost = await _context.Costs.FindAsync(costId);
+    if (cost == null)
+    {
+        return NotFound(new { message = "Masraf bulunamadı." });
+    }
+
+    cost.IsApproved = true;
+    await _context.SaveChangesAsync();
+
+    return Ok(new { message = "Masraf başarıyla onaylandı." });
+}
+
+[HttpDelete("deletecost")]
+public async Task<IActionResult> DeleteCost(int costId)
+{
+    var cost = await _context.Costs.FindAsync(costId);
+    if (cost == null)
+    {
+        return NotFound(new { message = "Masraf bulunamadı." });
+    }
+
+    _context.Costs.Remove(cost);
+    await _context.SaveChangesAsync();
+
+    return Ok(new { message = "Masraf başarıyla silindi." });
+}
+
+[HttpGet("upcoming-birthdays")]
+public async Task<IActionResult> GetUpcomingBirthdays()
+{
+    var manager = await _userManager.FindByNameAsync(User.Identity.Name);
+    if (manager == null)
+    {
+        return Unauthorized(new { message = "Oturum açmamış." });
+    }
+    var usersInCompany = await _userManager.Users
+        .Where(u => u.CompanyName == manager.CompanyName)
+        .ToListAsync();
+    Console.WriteLine("Users in company: " + usersInCompany.Count);
+    var today = DateTime.Today;
+    var upcomingBirthdays = usersInCompany
+        .Where(u => u.BirthDate.HasValue)
+        .Select(u => {
+            var birthDateThisYear = new DateTime(today.Year, u.BirthDate.Value.Month, u.BirthDate.Value.Day);
+            if (birthDateThisYear < today)
+            {
+                // Eğer bu yılki doğum günü geçtiyse, bir sonraki yılki doğum gününü hesapla
+                birthDateThisYear = birthDateThisYear.AddYears(1);
+            }
+            var daysUntilBirthday = (birthDateThisYear - today).Days;
+
+            return new
+            {
+                u.UserName,
+                BirthDate = u.BirthDate.Value.ToString("yyyy-MM-dd"),
+                DaysUntilBirthday = daysUntilBirthday
+            };
+        })
+        .Where(u => u.DaysUntilBirthday < 30)
+        .OrderBy(u => u.DaysUntilBirthday)
+        .ToList();
+
+
+
+    return Ok(upcomingBirthdays);
+}
+
+
 
 
     }    

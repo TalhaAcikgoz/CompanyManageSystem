@@ -11,13 +11,15 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            height: 100vh;
+            min-height: 100vh;
             margin: 0;
             background-color: #f4f4f4;
         }
+
         h1 {
             margin-bottom: 20px;
         }
+
         .button {
             margin: 10px;
             padding: 10px 20px;
@@ -27,16 +29,115 @@
             border-radius: 5px;
             background-color: #007bff;
             color: white;
+            transition: background-color 0.3s ease;
         }
+
         .button:hover {
             background-color: #0056b3;
         }
+
         .welcome-message {
             font-size: 24px;
             margin-bottom: 20px;
+            text-align: center;
         }
+
         .role-specific {
             margin-top: 20px;
+            width: 80%;
+            max-width: 800px;
+            margin-bottom: 40px;
+        }
+
+        #calendar {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        #calendar th, #calendar td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+
+        #calendar th {
+            background-color: #007bff;
+            color: white;
+        }
+
+        .holiday {
+            background-color: #ffcccb;
+            color: red;
+        }
+
+        #calendar td {
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        #calendar td:hover {
+            background-color: #f0f0f0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        table th, table td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+
+        table th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+
+        /* Hover efekti */
+        #calendar td.holiday:hover {
+            background-color: #ff9999;
+            position: relative;
+        }
+
+        /* Tooltip stil */
+        #calendar td.tooltip {
+            position: relative;
+        }
+
+        #calendar td.tooltip .tooltiptext {
+            visibility: hidden;
+            width: 120px;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            border-radius: 5px;
+            padding: 5px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%; /* Position it above the cell */
+            left: 50%;
+            margin-left: -60px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        #calendar td.tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .birthday {
+            background-color: #ffff99;
+            color: #333;
+        }
+
+        .weekend {
+            background-color: #ffcc99; /* Turuncu renk */
+            color: #333;
         }
     </style>
 </head>
@@ -54,6 +155,7 @@
     <div id="managerSection" class="role-specific" style="display: none;">
         <button class="button" onclick="location.href='personelRegister.html'">Add Personel</button>
         <button class="button" onclick="location.href='personelList.html'">List Personel</button>
+
         <h3>Personel İzin Talepleri</h3>
         <table id="leaveListManager">
             <thead>
@@ -63,81 +165,87 @@
                     <th>Bitiş Tarihi</th>
                     <th>Sebep</th>
                     <th>Durum</th>
+                    <th>Kalan İzinler</th>
                     <th>Onayla</th>
                     <th>Reddet</th>
                 </tr>
             </thead>
             <tbody id="managerLeaveList"></tbody>
         </table>
-        <div>
-            
-            <h3>Masraf Talepleri</h3>
-            <table id="costListManager">
-                <thead>
-                    <tr>
-                        <th>Username</th>
-                        <th>Miktar</th>
-                        <th>Sebep</th>
-                        <th>Durum</th>
-                        <th>Onayla</th>
-                        <th>Sil</th>
-                    </tr>
-                </thead>
-                <tbody id="managerCostList"></tbody>
-            </table>
-        </div>
-        
-        <h3>Yaklaşan Doğum Günleri</h3>
-        <table id="birthdayTable">
+
+        <h3>Masraf Talepleri</h3>
+        <table id="costListManager">
             <thead>
                 <tr>
-                    <th>Personel Adı</th>
-                    <th>Doğum Tarihi</th>
-                    <th>Kalan Gün</th>
+                    <th>Username</th>
+                    <th>Miktar</th>
+                    <th>Sebep</th>
+                    <th>Durum</th>
+                    <th>Onayla</th>
+                    <th>Sil</th>
                 </tr>
             </thead>
-            <tbody id="birthdayList"></tbody>
+            <tbody id="managerCostList"></tbody>
         </table>
-
+        
+        <div id="calendar-container">
+            <table id="calendar">
+                <thead>
+                    <tr>
+                        <th>Pzt</th>
+                        <th>Sal</th>
+                        <th>Çar</th>
+                        <th>Per</th>
+                        <th>Cuma</th>
+                        <th>Cum</th>
+                        <th>Paz</th>
+                    </tr>
+                </thead>
+                <tbody id="calendar-body">
+                    <!-- Takvim günleri burada olacak -->
+                </tbody>
+            </table>
+        </div>
     </div>
 
     <div id="personelSection" class="role-specific" style="display: none;">
         <p>Your Company: <span id="companyName">[Company Name]</span></p>
         <button class="button" id="profileButton">Your Profile</button>
 
-        <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-        
         <h3>İzin Al</h3>
         <input type="text" id="leaveDates" placeholder="Tarih aralığını seçin">
         <textarea id="reason" placeholder="İzin nedeni"></textarea>
-        <button id="leaveButton">İzin Al</button>
-        <div>
-            <h3>Alinan İzinler</h3>
-            <ul id="leaveList"></ul>
-        </div>
+        <button class="button" id="leaveButton">İzin Al</button>
+
+        <h3>Alınan İzinler</h3>
+        <ul id="leaveList"></ul>
 
         <h3>Masraf Talebi</h3>
         <input type="number" id="costAmount" placeholder="Miktar">
         <textarea id="costReason" placeholder="Sebep"></textarea>
         <button class="button" id="costButton" onclick="addCost()">Masraf Talebi</button>
-        <div>
-            <h3>Alinan Masraflar</h3>
-            <table id="costList">
+
+        <h3>Alınan Masraflar</h3>
+        <table id="costList"></table>
+        
+        <div id="calendar-container">
+            <table id="calendar">
+                <thead>
+                    <tr>
+                        <th>Pzt</th>
+                        <th>Sal</th>
+                        <th>Çar</th>
+                        <th>Per</th>
+                        <th>Cuma</th>
+                        <th>Cum</th>
+                        <th>Paz</th>
+                    </tr>
+                </thead>
+                <tbody id="calendar-body1">
+                    <!-- Takvim günleri burada olacak -->
+                </tbody>
             </table>
         </div>
-
-        <h3>Yaklaşan Doğum Günleri</h3>
-        <table id="birthdayTable1">
-            <thead>
-                <tr>
-                    <th>Personel Adı</th>
-                    <th>Doğum Tarihi</th>
-                    <th>Kalan Gün</th>
-                </tr>
-            </thead>
-            <tbody id="birthdayList1"></tbody>
-        </table>
     </div>
 
     <button class="button" id="logoutButton" onclick="logout()">Logout</button>

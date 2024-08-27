@@ -20,6 +20,7 @@ public class CreateUserModel
     public string Department { get; set; } = string.Empty;
     public ICollection<LeavePeriod>? LeavePeriods { get; set; }
     public Dictionary<string, string> CVInfos { get; set; } = new Dictionary<string, string>();
+    public int maxLeaveDays { get; set; }
 }
 
 public class LoginModel

@@ -1,4 +1,5 @@
 let username;
+let role;
 document.addEventListener('DOMContentLoaded', async () => {
     try {
         const response = await fetch('/api/account/getuser', {
@@ -14,7 +15,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const userData = await response.json();
         username = userData.username;
-        const role = userData.role;
+        role = userData.role;
         const companyName = userData.companyName;
 
         document.getElementById('welcomeMessage').textContent = `Welcome, ${username}! , Your role is ${role} , Your company is ${companyName}`;
@@ -41,14 +42,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                                     <td>${user.userName}</td>
                                     <td>${new Date(leave.startDate).toLocaleDateString()}</td>
                                     <td>${new Date(leave.endDate).toLocaleDateString()}</td>
-                                    <td>${leave.reason}</td>
+                                    <td>${leave.reason}</td>   
                                     <td>${leave.isApproved ? 'Onaylı' : 'Onaylanmamış'}</td>
+                                    <td>${leave.maxLeaveDays}</td>
                                     <td>
                                         <button onclick="approveLeave(${leave.id})" ${leave.isApproved ? 'disabled' : ''}>Onayla</button>
                                     </td>
                                     <td>
                                         <button onclick="cancelLeave('${user.userName}', ${leave.id})">İptal Et</button>
                                     </td>
+                                    
                                 `;
                                 leaveListManager.appendChild(row);
                             });
@@ -98,7 +101,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             .catch(error => console.error('Error:', error.message));
 
             // Yonetici dogum gunleri listeleme
-            fetch('http://localhost:5057/api/personal/upcoming-birthdays')
+/*             fetch('http://localhost:5057/api/personal/upcoming-birthdays')
             .then(response => response.json())
             .then(data => {
                 const birthdayList = document.getElementById('birthdayList');
@@ -119,7 +122,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     birthdayList.appendChild(row);
                 });
             })
-            .catch(error => console.error('Error:', error.message));
+            .catch(error => console.error('Error:', error.message)); */
             
             
         } else if (role === 'Personal') {
@@ -139,7 +142,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         data.$values.forEach(leave => {
                             const listItem = document.createElement('li');
                             console.log("hadi bak: " + leave.isApproved );
-                            listItem.textContent = `${new Date(leave.startDate).toLocaleDateString()} - ${new Date(leave.endDate).toLocaleDateString()} (Reason: ${leave.reason}) - ${leave.isApproved ? 'Onaylı' : 'Onaylanmamış'}`;
+                            listItem.textContent = `${new Date(leave.startDate).toLocaleDateString()} - ${new Date(leave.endDate).toLocaleDateString()} (Reason: ${leave.reason}) - kalan izin hakki ${leave.maxLeaveDays} - ${leave.isApproved ? 'Onaylı' : 'Onaylanmamış'}`;
                             console.log("leave " + leave.id + " " + leave.startDate + " " + leave.endDate + " " + leave.reason + " " + leave.isApproved);
                             // İptal butonu ekleyin
                             const cancelButton = document.createElement('button');
@@ -186,7 +189,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 .catch(error => console.error('Error:', error.message));
 
             // Personel dogum gunleri listeleme
-            fetch('http://localhost:5057/api/personal/upcoming-birthdays')
+/*             fetch('http://localhost:5057/api/personal/upcoming-birthdays')
             .then(response => response.json())
             .then(data => {
                 const birthdayList = document.getElementById('birthdayList1');
@@ -207,7 +210,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                     birthdayList.appendChild(row);
                 });
             })
-            .catch(error => console.error('Error:', error.message));
+            .catch(error => console.error('Error:', error.message)); */
+
+
+
+
+
         }
     } catch (error) {
         console.error(error);
@@ -224,11 +232,6 @@ function logout() {
     });
 }
 
-flatpickr("#leaveDates", {
-    mode: "range",
-    dateFormat: "Y-m-d",
-});
-
 
 function cancelLeave(username, leaveId) {
     console.log("username " + username + " leaveId " + leaveId);
@@ -242,6 +245,7 @@ function cancelLeave(username, leaveId) {
                 document.location.reload(); // Sayfayı yenileyerek listeyi güncelle
             } else {
                 return response.json().then(errorData => {
+                    alert('İzin iptal edilemedi.');
                     throw new Error(errorData.message || 'İzin iptal edilemedi.');
                 });
             }
@@ -343,3 +347,125 @@ function cancelLeave(username, leaveId) {
         })
         .catch(error => console.error('Error:', error));
     }
+
+
+
+    async function fetchUpcomingBirthdays() {
+        try {
+            const response = await fetch('http://localhost:5057/api/personal/upcoming-birthdays');
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const data = await response.json();
+            return data.$values.map(person => ({
+                date: new Date(person.birthDate),
+                userName: person.userName,
+                daysUntilBirthday: person.daysUntilBirthday
+            }));
+        } catch (error) {
+            console.error("Error fetching upcoming birthdays:", error);
+            return [];
+        }
+    }
+    
+    async function fetchPublicHolidays(year) {
+        try {
+            const response = await fetch(`https://date.nager.at/api/v3/publicholidays/${year}/TR`);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const holidays = await response.json();
+            console.log("Fetched Holidays:", holidays); // Tatil verilerini kontrol etmek için konsola yazdır
+            return holidays.map(holiday => ({
+                date: new Date(holiday.date),
+                localName: holiday.localName, // Tatil adı
+                name: holiday.name // İngilizce tatil adı
+            }));
+        } catch (error) {
+            console.error("Error fetching public holidays:", error);
+            return []; // Boş bir dizi döndür
+        }
+    }
+    
+    async function createCalendar() {
+        const calendarBody = document.getElementById('calendar-body1');
+        const managercalendarBody = document.getElementById('calendar-body');
+        const currentYear = new Date().getFullYear();
+        const currentMonth = new Date().getMonth();
+        
+        const publicHolidays = await fetchPublicHolidays(currentYear);
+        const upcomingBirthdays = await fetchUpcomingBirthdays();
+        
+        const firstDayOfMonth = new Date(currentYear, currentMonth).getDay() - 1;
+        const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+        
+        let date = 1;
+        for (let i = 0; i < 6; i++) {
+            const row = document.createElement('tr');
+            
+            for (let j = 0; j < 7; j++) {
+                const cell = document.createElement('td');
+                if (i === 0 && j < firstDayOfMonth) {
+                    const cellText = document.createTextNode('');
+                    cell.appendChild(cellText);
+                    row.appendChild(cell);
+                } else if (date > daysInMonth) {
+                    break;
+                } else {
+                    const cellDate = new Date(currentYear, currentMonth, date);
+                    const cellText = document.createTextNode(date);
+                    cell.appendChild(cellText);
+
+                    if (cellDate.getDay() === 0 || cellDate.getDay() === 6) { // Pazar (0) veya Cumartesi (6)
+                        cell.classList.add('weekend');
+                    }
+                    
+                    // Tatil günlerini kontrol et
+                    publicHolidays.forEach(holiday => {
+                        if (
+                            cellDate.getDate() === holiday.date.getDate() &&
+                            cellDate.getMonth() === holiday.date.getMonth() &&
+                            cellDate.getFullYear() === holiday.date.getFullYear()
+                        ) {
+                            cell.classList.add('holiday');
+                            cell.classList.add('tooltip');
+                            const tooltipText = document.createElement('span');
+                            tooltipText.classList.add('tooltiptext');
+                            tooltipText.textContent = `Tatil: ${holiday.localName} (${holiday.date.toDateString()})`;
+                            cell.appendChild(tooltipText);
+                        }
+                    });
+    
+                    // Doğum günlerini kontrol et
+                    upcomingBirthdays.forEach(birthday => {
+                        if (
+                            cellDate.getDate() === birthday.date.getDate() &&
+                            cellDate.getMonth() === birthday.date.getMonth()
+                        ) {
+                            cell.classList.add('birthday');
+                            cell.classList.add('tooltip');
+                            const tooltipText = document.createElement('span');
+                            tooltipText.classList.add('tooltiptext');
+                            tooltipText.textContent = `Doğum Günü: ${birthday.userName} (${birthday.daysUntilBirthday} gün kaldı)`;
+                            cell.appendChild(tooltipText);
+                        }
+                    });
+                    
+                    row.appendChild(cell);
+                    date++;
+                }
+            }
+            if(role === 'Personal') {
+                calendarBody.appendChild(row);
+            }
+            else if(role === 'Manager')
+                managercalendarBody.appendChild(row);
+        }
+    }
+    
+    
+    createCalendar();
+    
+    
+
+    

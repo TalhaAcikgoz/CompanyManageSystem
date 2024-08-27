@@ -77,6 +77,7 @@ namespace MyIdentityApp.Controllers{
             LastName = model.LastName,
             BirthDate = model.BirthDate,
             Department = model.Department,
+            maxLeaveDays = model.maxLeaveDays
         };
 
         var result = await _userManager.CreateAsync(user, model.password);
@@ -330,6 +331,11 @@ public async Task<IActionResult> AddLeave([FromBody] LeavePeriod leavePeriod, [F
 
     leavePeriod.ApplicationUserId = user.Id;
 
+    if (user.maxLeaveDays < (leavePeriod.EndDate - leavePeriod.StartDate).Days)
+    {
+        return BadRequest(new { message = "Kullanıcının izin hakkı yetersiz." });
+    }
+
     _context.LeavePeriods.Add(leavePeriod);
     await _context.SaveChangesAsync();
     if (user.LeavePeriods == null)
@@ -344,15 +350,23 @@ public async Task<IActionResult> AddLeave([FromBody] LeavePeriod leavePeriod, [F
 [HttpPut("approveleave")]
 public async Task<IActionResult> ApproveLeave(int leaveId)
 {
-    Console.WriteLine("Leave id: " + leaveId);
     var leavePeriod = await _context.LeavePeriods.FindAsync(leaveId);
     if (leavePeriod == null)
     {
         return NotFound(new { message = "İzin bulunamadı." });
     }
+    var user = await _userManager.FindByIdAsync(leavePeriod.ApplicationUserId);
+    if (user == null)
+    {
+        return NotFound(new { message = "Kullanıcı bulunamadı." });
+    }
+    Console.WriteLine("leavedays: ", (leavePeriod.EndDate - leavePeriod.StartDate).Days);
+    user.maxLeaveDays -= (leavePeriod.EndDate - leavePeriod.StartDate).Days + 1;
+    _context.Users.Update(user);
 
     leavePeriod.IsApproved = true;
     await _context.SaveChangesAsync();
+
 
     return Ok(new { message = "İzin başarıyla onaylandı." });
 }
@@ -385,7 +399,8 @@ public async Task<IActionResult> GetAllLeaves()
                     lp.EndDate,
                     lp.Reason,
                     lp.IsApproved,
-                    lp.ApplicationUser.UserName
+                    lp.ApplicationUser.UserName,
+                    lp.ApplicationUser.maxLeaveDays
                 })
                 .ToListAsync();
 
@@ -421,7 +436,8 @@ public async Task<IActionResult> GetLeaves(string username)
                                    lp.Reason,
                                    lp.Id,
                                    lp.IsApproved,
-                                   lp.ApplicationUser.UserName
+                                   lp.ApplicationUser.UserName,
+                                   lp.ApplicationUser.maxLeaveDays
                                })
                                .ToListAsync();
 
@@ -452,6 +468,10 @@ public async Task<IActionResult> CancelLeave(string username, int leaveId)
         if (leavePeriod == null)
         {
             return NotFound(new { message = "İzin bulunamadı." });
+        }
+        if (leavePeriod.IsApproved)
+        {
+            return BadRequest(new { message = "Onaylanmış izin iptal edilemez." });
         }
 
         _context.LeavePeriods.Remove(leavePeriod);

@@ -16,6 +16,7 @@
         <input type="text" id="LastName" placeholder="Last Name" required><br>
         <input type="date" id="BirthDate" placeholder="Date of Birth" required><br>
         <input type="text" id="department" placeholder="Department" required><br>
+        <input type="text" id="maxLeaveDays" placeholder="maxLeaveDays" required><br>
         <button type="submit">Add Personel</button>
     </form>
 
@@ -32,6 +33,7 @@
                 LastName: document.getElementById('LastName').value,
                 BirthDate: document.getElementById('BirthDate').value,
                 Department: document.getElementById('department').value,
+                MaxLeaveDays: document.getElementById('maxLeaveDays').value,
                 Role: 'Personal',
             };
 

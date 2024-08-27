@@ -98,33 +98,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                             costList.textContent = 'Masraf bulunamadı.';
                         }
             })
-            .catch(error => console.error('Error:', error.message));
-
-            // Yonetici dogum gunleri listeleme
-/*             fetch('http://localhost:5057/api/personal/upcoming-birthdays')
-            .then(response => response.json())
-            .then(data => {
-                const birthdayList = document.getElementById('birthdayList');
-                birthdayList.innerHTML = '';
-                
-                birthday = data.$values;
-                console.log("data1 " + birthday);
-                birthday.forEach(person => {
-                    console.log("yavv yeto: ",person);
-                    const birthDate = new Date(person.birthDate);
-                    console.log("person " + person.userName + " " + birthDate.toISOString() + " " + person.daysUntilBirthday);
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td>${person.userName}</td>
-                        <td>${birthDate.toLocaleDateString()}</td>
-                        <td>${person.daysUntilBirthday} gün kaldı</td>
-                    `;
-                    birthdayList.appendChild(row);
-                });
-            })
-            .catch(error => console.error('Error:', error.message)); */
-            
-            
+            .catch(error => console.error('Error:', error.message));            
         } else if (role === 'Personal') {
             document.getElementById('personelSection').style.display = 'block';
             document.getElementById('companyName').textContent = companyName;
@@ -188,34 +162,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 })
                 .catch(error => console.error('Error:', error.message));
 
-            // Personel dogum gunleri listeleme
-/*             fetch('http://localhost:5057/api/personal/upcoming-birthdays')
-            .then(response => response.json())
-            .then(data => {
-                const birthdayList = document.getElementById('birthdayList1');
-                birthdayList.innerHTML = '';
-                
-                birthday = data.$values;
-                console.log("data1 " + birthday);
-                birthday.forEach(person => {
-                    console.log("yavv yeto: ",person);
-                    const birthDate = new Date(person.birthDate);
-                    console.log("person " + person.userName + " " + birthDate.toISOString() + " " + person.daysUntilBirthday);
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td>${person.userName}</td>
-                        <td>${birthDate.toLocaleDateString()}</td>
-                        <td>${person.daysUntilBirthday} gün kaldı</td>
-                    `;
-                    birthdayList.appendChild(row);
-                });
-            })
-            .catch(error => console.error('Error:', error.message)); */
-
-
-
-
-
         }
     } catch (error) {
         console.error(error);
@@ -231,7 +177,6 @@ function logout() {
         window.location.href = '/login.html';
     });
 }
-
 
 function cancelLeave(username, leaveId) {
     console.log("username " + username + " leaveId " + leaveId);
@@ -255,12 +200,15 @@ function cancelLeave(username, leaveId) {
 }
 
     document.getElementById('leaveButton').addEventListener('click', function() {
-        const dates = document.getElementById('leaveDates').value.split(" to ");
+        const startDate = document.getElementById('startDates').value;
+        const endDate = document.getElementById('leaveDates').value;
+            
+        // Tarihleri birleştirip 'dates' değişkenine atıyoruz
         const reason = document.getElementById('reason').value;
         
         const leavePeriod = {
-            StartDate: dates[0],
-            EndDate: dates[1],
+            StartDate: startDate,
+            EndDate: endDate,
             Reason: reason,
             isApproved: false
         };
@@ -462,10 +410,4 @@ function cancelLeave(username, leaveId) {
                 managercalendarBody.appendChild(row);
         }
     }
-    
-    
     createCalendar();
-    
-    
-
-    

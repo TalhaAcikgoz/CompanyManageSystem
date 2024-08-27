@@ -66,12 +66,13 @@ public class AccountController : Controller
         var result = await _userManager.CreateAsync(user, model.password);
         if (result.Succeeded)
         {
-            if (!await _roleManager.RoleExistsAsync(model.role))
+            Console.WriteLine("User created and role is : " + model.role);
+            if (!await _roleManager.RoleExistsAsync("NotManager"))
             {
                 var roleeror = await _userManager.DeleteAsync(user);
                 return BadRequest(new { message = "Role bulunamadi."+ " delete error: "+ roleeror.ToString() });
             }
-            await _userManager.AddToRoleAsync(user, model.role);
+            await _userManager.AddToRoleAsync(user, "NotManager");
             return Ok("Kullanici basariyla oluşturuldu ve rol atandi.");
         }
         var resultErrors = await _userManager.DeleteAsync(user);
@@ -136,15 +137,24 @@ public class AccountController : Controller
     {
         if (ModelState.IsValid)
         {
+            var user = await _userManager.FindByNameAsync(model.username);
+            var role = await _userManager.GetRolesAsync(user);
+            Console.WriteLine(role[0]);
+            if (role[0] == "NotManager")
+            {
+                Console.WriteLine("Admin tarafindan onaylanmadiniz");
+                return BadRequest(new { message = "Admin tarafindan onaylanmadiniz" });
+            }
             var result = await _signInManager.PasswordSignInAsync(model.username, model.password, isPersistent: true, lockoutOnFailure: false);
-
+            
+            
             if (result.Succeeded)
             {
-                return Ok(new { Message = "Giriş başarılı." });
+                return Ok(new { message = "Giriş başarılı." });
             }
-            return BadRequest(new { Message = "Giriş başarısız." });
+            return BadRequest(new { message = "Giriş başarısız." });
         }
-        return BadRequest(new { Message = "Geçersiz giriş bilgileri." });
+        return BadRequest(new { message = "Geçersiz giriş bilgileri." });
     }
     
     [HttpPost("logout")]
@@ -192,6 +202,57 @@ public class AccountController : Controller
 
         return Ok(personelList);
     }
+
+    [HttpGet("getcompanies")]
+    public async Task<IActionResult> GetCompanies()
+    {
+        var companies = await _userManager.Users
+            .Select(u => u.CompanyName)
+            .Distinct()
+            .ToListAsync();
+
+        return Ok(companies);
+    }
+
+
+[HttpGet("getusersbycompany")]
+public async Task<IActionResult> GetUsersByCompany(string companyName)
+{
+    var users = await _userManager.Users
+        .Where(u => u.CompanyName == companyName)
+        .Select(u => new { u.UserName, Role = _userManager.GetRolesAsync(u).Result.FirstOrDefault() })
+        .ToListAsync();
+
+    return Ok(users);
+}
+
+[HttpPost("changeroletoManager")]
+public async Task<IActionResult> ChangeRoleToManager([FromBody] ChangeRoleModel model)
+{
+    var user = await _userManager.FindByNameAsync(model.Username);
+    if (user == null)
+    {
+        return BadRequest(new { success = false, message = "Kullanıcı bulunamadı." });
+    }
+
+    var currentRoles = await _userManager.GetRolesAsync(user);
+    await _userManager.RemoveFromRolesAsync(user, currentRoles);
+    var result = await _userManager.AddToRoleAsync(user, "Manager");
+
+    if (result.Succeeded)
+    {
+        return Ok(new { success = true });
+    }
+    else
+    {
+        return BadRequest(new { success = false, message = "Rol değiştirilemedi." });
+    }
+}
+
+public class ChangeRoleModel
+{
+    public string Username { get; set; }
+}
 
 
 }

@@ -15,10 +15,10 @@ document.getElementById('registerForm').addEventListener('submit', async functio
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                  username, email, 
-                 password, role: 'Manager', 
+                 password, role: 'NotManager', 
                  CompanyName, FirstName, LastName, 
                  dob 
-            }) // TODO 4.rol eklensin onaylaninca manager gelsin
+            })
         });
 
         if (response.ok) {

@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using MyIdentityApp.Data;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Authorization;
+
 
 public class CVInfo
 {
@@ -50,6 +50,49 @@ namespace MyIdentityApp.Controllers{
             _roleManager = roleManager;
         }
 
+    private string GenerateRandomPassword()
+{
+    var options = new PasswordOptions
+    {
+        RequiredLength = 8,
+        RequiredUniqueChars = 1,
+        RequireDigit = true,
+        RequireLowercase = true,
+        RequireNonAlphanumeric = true,
+        RequireUppercase = true,
+    };
+
+    string[] randomChars = new[] {
+        "ABCDEFGHJKLMNOPQRSTUVWXYZ",    // Uppercase 
+        "abcdefghijkmnopqrstuvwxyz",    // Lowercase
+        "0123456789",                   // Digits
+        "!@$?_-"                        // Non-alphanumeric
+    };
+
+    Random rand = new Random(Environment.TickCount);
+    List<char> chars = new List<char>();
+
+    if (options.RequireUppercase)
+        chars.Insert(rand.Next(0, chars.Count), randomChars[0][rand.Next(0, randomChars[0].Length)]);
+
+    if (options.RequireLowercase)
+        chars.Insert(rand.Next(0, chars.Count), randomChars[1][rand.Next(0, randomChars[1].Length)]);
+
+    if (options.RequireDigit)
+        chars.Insert(rand.Next(0, chars.Count), randomChars[2][rand.Next(0, randomChars[2].Length)]);
+
+    if (options.RequireNonAlphanumeric)
+        chars.Insert(rand.Next(0, chars.Count), randomChars[3][rand.Next(0, randomChars[3].Length)]);
+
+    for (int i = chars.Count; i < options.RequiredLength || chars.Distinct().Count() < options.RequiredUniqueChars; i++)
+    {
+        string rcs = randomChars[rand.Next(0, randomChars.Length)];
+        chars.Insert(rand.Next(0, chars.Count), rcs[rand.Next(0, rcs.Length)]);
+    }
+
+    return new string(chars.ToArray());
+}
+
     [HttpPost("addpersonel")]
     public async Task<IActionResult> CreatePersonal([FromBody] CreateUserModel model)
     {
@@ -67,7 +110,7 @@ namespace MyIdentityApp.Controllers{
         {
             return BadRequest(new { message = "wrong company name" });
         }
-
+        var password = GenerateRandomPassword();
         var user = new ApplicationUser
         {
             UserName = model.username,
@@ -79,8 +122,9 @@ namespace MyIdentityApp.Controllers{
             Department = model.Department,
             maxLeaveDays = model.maxLeaveDays
         };
-
-        var result = await _userManager.CreateAsync(user, model.password);
+        Console.WriteLine("Random pass: " + password);
+        model.password = password;
+        var result = await _userManager.CreateAsync(user, password);
         if (result.Succeeded)
         {
             if (!await _roleManager.RoleExistsAsync(model.role))
@@ -89,6 +133,9 @@ namespace MyIdentityApp.Controllers{
                 return BadRequest(new { message = "Rol bulunamadi." });
             }
             await _userManager.AddToRoleAsync(user, model.role);
+            var emailService = HttpContext.RequestServices.GetRequiredService<EmailService>();
+            await emailService.SendEmailAsync(model.email, "Your account password", $"Your userName is:{model.username}\nYour password is: {password}");
+
             return Ok(new { message = " User creation succssess " });
         }
 
@@ -130,6 +177,41 @@ namespace MyIdentityApp.Controllers{
 
         return Ok(personelList);
     }
+
+public async Task<string> GetManagerEmailAsync(string username)
+{
+    var user = await _userManager.FindByNameAsync(username); // Kullanıcıyı asenkron olarak al
+    if (user == null)
+    {
+        return null; // Kullanıcı bulunamazsa null dön
+    }
+    
+    var company = user.CompanyName;
+    Console.WriteLine("Company: " + company);
+    
+    var usersInCompany = await _userManager.Users
+        .Where(u => u.CompanyName == company)
+        .ToListAsync();
+    
+    var managerEmail = ""; // Manager'ın e-posta adresini saklamak için değişken
+    foreach (var u in usersInCompany)
+    {
+        if (await _userManager.IsInRoleAsync(u, "Manager"))
+        {
+            managerEmail = u.Email;
+            break; // Bir tane manager bulduktan sonra döngüden çık
+        }
+    }
+    if (managerEmail == "")
+    {
+        Console.WriteLine("Manager not found in getfunct.");
+        return null; // Manager bulunamazsa null dön
+    }
+    Console.WriteLine("Manager email: " + managerEmail);
+    return managerEmail; // E-posta adresini döndür
+}
+
+
     [HttpGet("getpersonaldetails")]
     public async Task<IActionResult> GetUser(string username)
         {
@@ -196,6 +278,7 @@ namespace MyIdentityApp.Controllers{
                         Console.WriteLine("User not found or wrong company name" + model.username);
                         return Forbid("Bu profil güncelleme işlemi için yetkiniz yok.");
                     }
+                    Console.WriteLine("User found: " + model.password);
                         if (model.FirstName != null)
                         {
                             targetUser.FirstName = model.FirstName;
@@ -215,6 +298,18 @@ namespace MyIdentityApp.Controllers{
                         if (model.email != null)
                         {
                             targetUser.Email = model.email;
+                        }
+                        if (model.password != null)
+                        {   
+                            Console.WriteLine("Password reset" + targetUser.UserName + " " + model.password );
+                            var token = await _userManager.GeneratePasswordResetTokenAsync(targetUser);
+                            var result1 = await _userManager.ResetPasswordAsync(targetUser, token, model.password);
+                            if (!result1.Succeeded)
+                            {
+                                var errors = string.Join(", ", result1.Errors.Select(e => e.Description));
+                                Console.WriteLine("Password reset errors: " + errors);
+                                return BadRequest(new {message = "Şifre sıfırlama hatası: " + errors});
+                            }
                         }
 
                         var result = await _userManager.UpdateAsync(targetUser);
@@ -335,6 +430,10 @@ public async Task<IActionResult> AddLeave([FromBody] LeavePeriod leavePeriod, [F
     {
         return BadRequest(new { message = "Kullanıcının izin hakkı yetersiz." });
     }
+    if (leavePeriod.StartDate > leavePeriod.EndDate)
+    {
+        return BadRequest(new { message = "Başlangıç tarihi bitiş tarihinden büyük olamaz." });
+    }
 
     _context.LeavePeriods.Add(leavePeriod);
     await _context.SaveChangesAsync();
@@ -342,6 +441,17 @@ public async Task<IActionResult> AddLeave([FromBody] LeavePeriod leavePeriod, [F
     {
         Console.WriteLine("Leave periods is null");
     }
+    var managerEmail = await GetManagerEmailAsync(username);
+    if (managerEmail != null)
+    {
+        Console.WriteLine("Manager email: " + managerEmail);
+    }
+    else
+    {
+        Console.WriteLine("Manager email not found.");
+    }
+    var emailService = HttpContext.RequestServices.GetRequiredService<EmailService>();
+    await emailService.SendEmailAsync(managerEmail, "Izin istegi", $"The employee named - {user.UserName} - wants to take leave between {leavePeriod.StartDate} - {leavePeriod.EndDate}.\nReason: {leavePeriod.Reason}\nPlease approve or reject the leave request.\n\nBest regards,\nHR Department");
 
     return Ok(new { message = "İzin başarıyla eklendi." });
 }
@@ -366,6 +476,8 @@ public async Task<IActionResult> ApproveLeave(int leaveId)
 
     leavePeriod.IsApproved = true;
     await _context.SaveChangesAsync();
+    var emailService = HttpContext.RequestServices.GetRequiredService<EmailService>();
+    await emailService.SendEmailAsync(user.Email, "Izin istegi Onaylandi", $"Approved the director's request for leave from {leavePeriod.StartDate} - {leavePeriod.EndDate}.\nReason: {leavePeriod.Reason}\n Best regards,\nHR Department");
 
 
     return Ok(new { message = "İzin başarıyla onaylandı." });
@@ -482,6 +594,9 @@ public async Task<IActionResult> CancelLeave(string username, int leaveId)
             return StatusCode(StatusCodes.Status500InternalServerError, new { message = "İzin iptal edilirken bir hata oluştu." });
         }
 
+        var emailService = HttpContext.RequestServices.GetRequiredService<EmailService>();
+        await emailService.SendEmailAsync(user.Email, "Izin istegi Reddedildi", $"Your leave request from {leavePeriod.StartDate} - {leavePeriod.EndDate} is canceled.\nLeave Reason: {leavePeriod.Reason}\n Best regards,\nHR Department");
+
         return Ok(new { message = "İzin başarıyla iptal edildi." });
     }
     catch (Exception ex)
@@ -505,6 +620,17 @@ public async Task<IActionResult> AddCost([FromBody] Cost cost)
 
     _context.Costs.Add(cost);
     await _context.SaveChangesAsync();
+    var managerEmail = await GetManagerEmailAsync(user.UserName);
+    if (managerEmail != null)
+    {
+        Console.WriteLine("Manager email: " + managerEmail);
+    }
+    else
+    {
+        Console.WriteLine("Manager email not found.");
+    }
+    var emailService = HttpContext.RequestServices.GetRequiredService<EmailService>();
+    await emailService.SendEmailAsync(managerEmail, "Expense Request", $"The employee - {user.UserName} - made an expense entry worth {cost.Amount} TL for {cost.Reason}.\n\nPlease approve or reject the expense entry.\n\nBest regards,\nHR Department");
 
     return Ok(new { message = "Masraf başarıyla eklendi." });
 }
@@ -593,9 +719,18 @@ public async Task<IActionResult> ApproveCost(int costId)
     {
         return NotFound(new { message = "Masraf bulunamadı." });
     }
+    var user = await _userManager.FindByIdAsync(cost.ApplicationUserId);
+    if (user == null)
+    {
+        return NotFound(new { message = "Kullanıcı bulunamadı." });
+    }
 
     cost.IsApproved = true;
     await _context.SaveChangesAsync();
+
+    var emailService = HttpContext.RequestServices.GetRequiredService<EmailService>();
+    await emailService.SendEmailAsync(user.Email, "Your expense request has been approved", $"Approved the director's request for expense {cost.Amount} TL.\nExpense Reason: {cost.Reason}\n\nBest regards,\nHR Department");
+
 
     return Ok(new { message = "Masraf başarıyla onaylandı." });
 }
@@ -612,6 +747,15 @@ public async Task<IActionResult> DeleteCost(int costId)
     _context.Costs.Remove(cost);
     await _context.SaveChangesAsync();
 
+    var user = await _userManager.FindByIdAsync(cost.ApplicationUserId);
+    if (user == null)
+    {
+        return NotFound(new { message = "Kullanıcı bulunamadı." });
+    }
+
+    var emailService = HttpContext.RequestServices.GetRequiredService<EmailService>();
+    await emailService.SendEmailAsync(user.Email, "Your expense claim has been rejected", $"Your expense request {cost.Amount} TL is rejected.\nExpense Reason: {cost.Reason}\n\nBest regards,\nHR Department");
+
     return Ok(new { message = "Masraf başarıyla silindi." });
 }
 
@@ -626,7 +770,6 @@ public async Task<IActionResult> GetUpcomingBirthdays()
     var usersInCompany = await _userManager.Users
         .Where(u => u.CompanyName == manager.CompanyName)
         .ToListAsync();
-    Console.WriteLine("Users in company: " + usersInCompany.Count);
     var today = DateTime.Today;
     var upcomingBirthdays = usersInCompany
         .Where(u => u.BirthDate.HasValue)
@@ -638,7 +781,7 @@ public async Task<IActionResult> GetUpcomingBirthdays()
                 birthDateThisYear = birthDateThisYear.AddYears(1);
             }
             var daysUntilBirthday = (birthDateThisYear - today).Days;
-
+            
             return new
             {
                 u.UserName,
@@ -650,13 +793,51 @@ public async Task<IActionResult> GetUpcomingBirthdays()
         .OrderBy(u => u.DaysUntilBirthday)
         .ToList();
 
+    var logFilePath = "birthday-check.log";
+    var todays = DateTime.Today;
+    if (System.IO.File.Exists(logFilePath))
+    {
+        var logContent = await System.IO.File.ReadAllTextAsync(logFilePath);
+            if (DateTime.TryParse(logContent, out var lastRunDate))
+            {
+                if (lastRunDate.Date == today)
+                {
+                    // Eğer log dosyasında bugün tarihi varsa, işlem yapılmış demektir
+                    Console.WriteLine("Bugün işlem yapıldı.");
+                    return Ok(upcomingBirthdays);
 
+                }
+            }
+    }
+    if (upcomingBirthdays.Count > 0)
+    {
+        var allUsersEmails = usersInCompany.Select(u => u.Email).ToList();
+        var managerEmails = new List<string>();
+        foreach (var user in usersInCompany)
+        {
+            if (await _userManager.IsInRoleAsync(user, "Manager"))
+            {
+                managerEmails.Add(user.Email);
+            }
+        }
+        var emailService = HttpContext.RequestServices.GetRequiredService<EmailService>();
+        foreach (var birthday in upcomingBirthdays)
+        {
+            var subject = $"Upcoming Birthday Reminder: {birthday.UserName}";
+            var body = $"The birthday of the employee named {birthday.UserName} is approaching. The birthday will be on {birthday.BirthDate}. There are {birthday.DaysUntilBirthday} days left until the birthday.";
+            foreach (var email in allUsersEmails)
+            {
+                if (birthday.DaysUntilBirthday < 7)
+                {
+                    await emailService.SendEmailAsync(email, subject, body);
+                }
+            }
+        }
+        await System.IO.File.WriteAllTextAsync(logFilePath, today.ToString("yyyy-MM-dd"));
+    }
 
     return Ok(upcomingBirthdays);
 }
-
-
-
 
     }    
 }

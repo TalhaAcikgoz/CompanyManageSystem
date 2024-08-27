@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Company List</title>
+</head>
+<body>
+    <h1>List of Companies</h1>
+    <ul id="companyList">
+        <!-- Company names will be populated here -->
+    </ul>
+
+    <h2>Users in Selected Company</h2>
+    <ul id="userList">
+        <!-- Users will be populated here -->
+    </ul>
+
+    <script>
+        function listCompanies() {
+            fetch('http://localhost:5057/api/account/getcompanies')
+                .then(response => response.json())
+                .then(data => {
+                    const values = data.$values;
+                    const companyList = document.getElementById('companyList');
+                    companyList.innerHTML = '';
+
+                    if (Array.isArray(values)) {
+                        values.forEach(company => {
+                            const listItem = document.createElement('li');
+                            listItem.textContent = company;
+                            listItem.style.cursor = 'pointer';
+                            listItem.addEventListener('click', () => loadUsers(company));
+                            companyList.appendChild(listItem);
+                        });
+                    } else {
+                        console.error('No companies found or unexpected response format.');
+                    }
+                })
+                .catch(error => console.error('Error:', error.message));
+        }
+
+        function loadUsers(companyName) {
+            fetch(`http://localhost:5057/api/account/getusersbycompany?companyName=${encodeURIComponent(companyName)}`)
+                .then(response => response.json())
+                .then(data => {
+                    const users = data.$values;
+                    const userList = document.getElementById('userList');
+                    userList.innerHTML = '';
+
+                    if (Array.isArray(users)) {
+                        users.forEach(user => {
+                            const listItem = document.createElement('li');
+                            listItem.innerHTML = `${user.userName} (${user.role})`;
+
+                            if (user.role !== 'Manager') {
+                                const button = document.createElement('button');
+                                button.textContent = 'Make Manager';
+                                button.addEventListener('click', () => changeRoleToManager(user.userName));
+                                listItem.appendChild(button);
+                            }
+
+                            userList.appendChild(listItem);
+                        });
+                    } else {
+                        console.error('No users found or unexpected response format.');
+                    }
+                })
+                .catch(error => console.error('Error:', error.message));
+        }
+
+        function changeRoleToManager(username) {
+            fetch('http://localhost:5057/api/account/changeroletoManager', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: username })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(`User ${username} is now a Manager.`);
+                    // Optionally, reload the user list to reflect the change
+                    document.getElementById('userList').innerHTML = '';
+                } else {
+                    alert('Failed to change role: ' + data.message);
+                }
+            })
+            .catch(error => console.error('Error:', error.message));
+        }
+
+        // Sayfa yüklendiğinde şirketleri listele
+        document.addEventListener('DOMContentLoaded', listCompanies);
+    </script>
+</body>
+</html>

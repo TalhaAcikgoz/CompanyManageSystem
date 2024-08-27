@@ -4,6 +4,7 @@ using System;
 using System.Threading.Tasks;
 using MyIdentityApp.Data;
 
+
 namespace MyIdentityApp.DataInitializer
 {
     public static class DataInitializer
@@ -13,7 +14,7 @@ namespace MyIdentityApp.DataInitializer
             var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
             var userManager = serviceProvider.GetRequiredService<UserManager<ApplicationUser>>();
 
-            string[] roles = { "Admin", "Manager", "Personal" };
+            string[] roles = { "Admin", "Manager", "Personal", "NotManager" };
 
             foreach (var role in roles)
             {

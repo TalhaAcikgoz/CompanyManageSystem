@@ -149,7 +149,7 @@
     </div>
 
     <div id="adminSection" class="role-specific" style="display: none;">
-        <button class="button" onclick="listCompanies()">List Companies</button>
+        <button class="button" onclick="location.href='listCompanies.html'">List Companies</button>
     </div>
 
     <div id="managerSection" class="role-specific" style="display: none;">
@@ -213,7 +213,8 @@
         <button class="button" id="profileButton">Your Profile</button>
 
         <h3>İzin Al</h3>
-        <input type="text" id="leaveDates" placeholder="Tarih aralığını seçin">
+        <input type="date" id="startDates" placeholder="Tarih aralığını seçin">
+        <input type="date" id="leaveDates" placeholder="Tarih aralığını seçin">
         <textarea id="reason" placeholder="İzin nedeni"></textarea>
         <button class="button" id="leaveButton">İzin Al</button>
 

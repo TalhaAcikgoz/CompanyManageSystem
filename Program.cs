@@ -7,8 +7,12 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using DotNetEnv;  // DotNetEnv kütüphanesini ekledik
 
 var builder = WebApplication.CreateBuilder(args);
+
+// .env dosyasını yükleme
+Env.Load();
 
 // Add services to the container.
 /* ==================== IDENTITY CONFIGURATION ==================== */
@@ -39,6 +43,17 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
 
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
+
+/* ==================== EMAIL SERVICE CONFIGURATION ==================== */
+
+// SMTP ayarlarını .env dosyasından okuma
+var smtpEmail = Environment.GetEnvironmentVariable("SMTP_EMAIL");
+var smtpPassword = Environment.GetEnvironmentVariable("SMTP_PASSWORD");
+
+// E-posta gönderme servisini DI container'a ekleme
+builder.Services.AddTransient<EmailService>();
+
+
 /* ==================== ==================== */
 
 var app = builder.Build();
